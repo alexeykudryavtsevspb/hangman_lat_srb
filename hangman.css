@@ -31,29 +31,44 @@ main {
   position: absolute;
   top: 5px;
   right: 10px;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.95);
   border: 2px solid rgb(255, 255, 153);
   border-radius: 12px;
-  padding: 6px 14px;
+  padding: 6px 12px;
   text-align: center;
   box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  min-width: 75px;
 }
 
 .score-label {
   display: block;
-  font-size: 10pt;
+  font-size: 8pt;
   text-transform: uppercase;
   color: #555;
   font-weight: bold;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
 #scoreValue {
   display: block;
-  font-size: 22pt;
+  font-size: 18pt;
   font-weight: bold;
   color: #222;
-  line-height: 1.1;
+  line-height: 1;
+}
+
+.score-divider {
+  height: 1px;
+  background-color: #ddd;
+  margin: 4px 0;
+}
+
+#highScoreValue {
+  display: block;
+  font-size: 16pt;
+  font-weight: bold;
+  color: #28a745;
+  line-height: 1;
 }
 
 #word {

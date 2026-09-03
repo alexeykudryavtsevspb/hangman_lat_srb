@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Вешала</title>
-    <link rel="stylesheet" href="hangman.css?v=4">
+    <link rel="stylesheet" href="hangman.css?v=5">
   </head>
   <body>
     <main>
@@ -13,6 +13,9 @@
         <div id="scoreBox">
           <span class="score-label">Резултат</span>
           <span id="scoreValue">0</span>
+          <div class="score-divider"></div>
+          <span class="score-label">Рекорд</span>
+          <span id="highScoreValue">0</span>
         </div>
       </div>
       <div id="word"></div>
@@ -22,6 +25,6 @@
         <button id="newGameButton" class="button" onclick="newGame();" disabled>Нова игра</button>
       </div>
     </main>
-    <script src="hangman.js?v=4"></script>
+    <script src="hangman.js?v=5"></script>
   </body>
 </html>

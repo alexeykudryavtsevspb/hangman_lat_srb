@@ -1388,8 +1388,9 @@ let audio_no = new Audio("no.mp3");
 let audio_win = new Audio("win.mp3");
 let audio_los = new Audio("los.mp3");
 
-// Считываем счет из localStorage (если его нет — начинаем с 0)
+// Считываем счет и рекорд из localStorage
 let score = parseInt(localStorage.getItem('hangman_score')) || 0;
+let highScore = parseInt(localStorage.getItem('hangman_high_score')) || 0;
 
 function Game()
 {
@@ -1448,6 +1449,11 @@ function Game()
                     maskedWord = word;
                     if(!scoreUpdated) {
                         score += 1;
+                        // Если текущие очки превысили рекорд — обновляем рекорд
+                        if (score > highScore) {
+                            highScore = score;
+                            localStorage.setItem('hangman_high_score', highScore);
+                        }
                         localStorage.setItem('hangman_score', score);
                         scoreUpdated = true;
                     }
@@ -1552,7 +1558,9 @@ function render( game )
 {
     document.getElementById("word").innerHTML = game.getMaskedWord(); 
     
+    // Обновляем вывод очков и рекорда
     document.getElementById("scoreValue").textContent = score;
+    document.getElementById("highScoreValue").textContent = highScore;
     
     let guessesContainer = document.getElementById("guesses");
     guessesContainer.innerHTML = "";
@@ -1576,7 +1584,7 @@ function render( game )
     {
         tipBox.textContent = youWon + " " + tip;
         tipBox.className = "win";
-        newGameButton.disabled = false; // Включаем кнопку при победе
+        newGameButton.disabled = false;
     }
     else if( game.isLost() )
     {
