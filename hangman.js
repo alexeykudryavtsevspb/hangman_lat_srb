@@ -1379,8 +1379,8 @@ let words = [
 
 /* Game */
 
-const youWon = "Pobedili ste!";
-const youLost = "Izgubili ste!";
+const youWon = "Победили сте!";
+const youLost = "Изгубили сте!";
 let tip = ".";
 
 let audio_yes = new Audio("yes.mp3");
@@ -1388,193 +1388,209 @@ let audio_no = new Audio("no.mp3");
 let audio_win = new Audio("win.mp3");
 let audio_los = new Audio("los.mp3");
 
+let score = parseInt(localStorage.getItem('hangman_score')) || 0;
+
 function Game()
 {
-	let index = Math.floor(Math.random() * words.length);
-	let word = words[index][0];
-	tip = words[index][1];
-	word = word.toUpperCase();
-	let guessedLetters = [];
-	let maskedWord = "";
-	let incorrectGuesses = 0;
-	
-	const allLetters = 'ABCDEFGHILMNOPQRSTUVXYZ';
-	let won = false;
-	let lost = false;
-	const maxGuesses = 7;
+    let index = Math.floor(Math.random() * words.length);
+    let word = words[index][0];
+    tip = words[index][1];
+    word = word.toUpperCase();
+    let guessedLetters = [];
+    let maskedWord = "";
+    let incorrectGuesses = 0;
+    
+    // Алфавит остаётся классической латынью
+    const allLetters = 'ABCDEFGHILMNOPQRSTUVXYZ';
+    let won = false;
+    let lost = false;
+    let scoreUpdated = false;
+    const maxGuesses = 7;
 
-	for ( let i = 0; i < word.length; i++ )
-	{
-		let nextCharacter = word.charAt(i);
-		let charCode = nextCharacter.charCodeAt(0);
-		let A = 65;
-		let Z = 90;
-		if( A <= charCode && charCode <= Z )
-		{
-			nextCharacter = "_";
-		}
-		maskedWord += nextCharacter;
-	}
+    for ( let i = 0; i < word.length; i++ )
+    {
+        let nextCharacter = word.charAt(i);
+        let charCode = nextCharacter.charCodeAt(0);
+        let A = 65;
+        let Z = 90;
+        if( A <= charCode && charCode <= Z )
+        {
+            nextCharacter = "_";
+        }
+        maskedWord += nextCharacter;
+    }
 
-	let guess = function( letter )
-	{
-		letter = letter.toUpperCase();
-		if( !guessedLetters.includes( letter ) && !won && !lost )
-		{	
-			guessedLetters.push(letter);
-			
-			if( word.includes( letter ) )
-			{
-				let matchingIndexes = [];
-				for ( let i = 0; i < word.length; i++ ) 
-				{
-					if( word.charAt(i) === letter )
-					{
-						matchingIndexes.push( i );
-					}
-				}
+    let guess = function( letter )
+    {
+        letter = letter.toUpperCase();
+        if( !guessedLetters.includes( letter ) && !won && !lost )
+        {   
+            guessedLetters.push(letter);
+            
+            if( word.includes( letter ) )
+            {
+                let matchingIndexes = [];
+                for ( let i = 0; i < word.length; i++ ) 
+                {
+                    if( word.charAt(i) === letter )
+                    {
+                        matchingIndexes.push( i );
+                    }
+                }
 
-				matchingIndexes.forEach( function(index) {
-					maskedWord = replace( maskedWord, index, letter );
-				});	
+                matchingIndexes.forEach( function(index) {
+                    maskedWord = replace( maskedWord, index, letter );
+                }); 
 
-				won = maskedWord === word;
-				
-				if(won) {
-					maskedWord = word;
-					audio_win.play().catch(() => {});
-				} else {
-					audio_yes.play().catch(() => {});
-				}
-			}
-			else
-			{
-				handleIncorrectGuess();
-			}
-		}
-	}
+                won = maskedWord === word;
+                
+                if(won) {
+                    maskedWord = word;
+                    if(!scoreUpdated) {
+                        score += 1;
+                        localStorage.setItem('hangman_score', score);
+                        scoreUpdated = true;
+                    }
+                    audio_win.play().catch(() => {});
+                } else {
+                    audio_yes.play().catch(() => {});
+                }
+            }
+            else
+            {
+                handleIncorrectGuess();
+            }
+        }
+    }
 
-	let handleIncorrectGuess = function()
-	{
-		incorrectGuesses++;
-		lost = incorrectGuesses >= maxGuesses;
-		if( lost )
-		{
-			maskedWord = word;
-			audio_los.play().catch(() => {});
-		}
-		else
-		{
-			audio_no.play().catch(() => {});
-		}
-	}
+    let handleIncorrectGuess = function()
+    {
+        incorrectGuesses++;
+        lost = incorrectGuesses >= maxGuesses;
+        if( lost )
+        {
+            maskedWord = word;
+			if(!scoreUpdated) {
+                score = Math.max(0, score - 1);
+                localStorage.setItem('hangman_score', score);
+                scoreUpdated = true;
+            }
+            audio_los.play().catch(() => {});
+        }
+        else
+        {
+            audio_no.play().catch(() => {});
+        }
+    }
 
-	return {
-		"getWord": function(){ return word; },
-		"getMaskedWord": function(){ return maskedWord; },
-		"guess": guess,
-		"getAllLetters": function(){ return [...allLetters]; },
-		"getGuessedLetters": function(){ return guessedLetters; },
-		"getIncorrectGuesses": function(){ return incorrectGuesses; },
-		"isWon": function(){ return won; },
-		"isLost": function(){ return lost; }
-	};
+    return {
+        "getWord": function(){ return word; },
+        "getMaskedWord": function(){ return maskedWord; },
+        "guess": guess,
+        "getAllLetters": function(){ return [...allLetters]; },
+        "getGuessedLetters": function(){ return guessedLetters; },
+        "getIncorrectGuesses": function(){ return incorrectGuesses; },
+        "isWon": function(){ return won; },
+        "isLost": function(){ return lost; }
+    };
 }
 
 function replace( value, index, replacement ) 
 {
-	return value.substring(0, index) + replacement + value.substring(index + replacement.length);
+    return value.substring(0, index) + replacement + value.substring(index + replacement.length);
 }
 
 function listenForInput( game ) 
 {
-	let guessLetter = function( letter )
-	{
-		if( letter )
-		{
-			let gameStillGoing = !game.isWon() && !game.isLost();
-			if( gameStillGoing )
-			{
-				game.guess( letter );
-				render( game );
-			}
-		}
-	};
+    let guessLetter = function( letter )
+    {
+        if( letter && game.getAllLetters().includes(letter) )
+        {
+            let gameStillGoing = !game.isWon() && !game.isLost();
+            if( gameStillGoing )
+            {
+                game.guess( letter );
+                render( game );
+            }
+        }
+    };
 
-	let handleClick = function( event )
-	{
-		if (event.target.classList.contains('guess') && !event.target.classList.contains('disabled'))
-		{
-			guessLetter( event.target.innerHTML.trim() );
-		}
-	}
+    let handleClick = function( event )
+    {
+        if (event.target.classList.contains('guess') && !event.target.classList.contains('disabled'))
+        {
+            guessLetter( event.target.innerHTML.trim() );
+        }
+    }
 
-	let handleKeyPress = function( event )
-	{
-		let letter = null;
-		const A = 65;
-		const Z = 90;
-		const ENTER = 13;
-		let isLetter = event.keyCode >= A && event.keyCode <= Z;
-		let newGameButton = document.getElementById("newGameButton");
-		let gameOver = game.isWon() || game.isLost();
+    let handleKeyPress = function( event )
+    {
+        let letter = null;
+        const A = 65;
+        const Z = 90;
+        const ENTER = 13;
+        let isLetter = event.keyCode >= A && event.keyCode <= Z;
+        let newGameButton = document.getElementById("newGameButton");
+        let gameOver = game.isWon() || game.isLost();
 
-		if( isLetter )
-		{
-			letter = String.fromCharCode( event.keyCode );
-		}
-		else if( event.keyCode === ENTER && gameOver )
-		{
-			newGameButton.click();
-		}
-		guessLetter( letter );
-	}
+        if( isLetter )
+        {
+            letter = String.fromCharCode( event.keyCode );
+        }
+        else if( event.keyCode === ENTER && gameOver )
+        {
+            newGameButton.click();
+        }
+        guessLetter( letter );
+    }
 
-	document.addEventListener('keydown', handleKeyPress );
-	document.body.addEventListener('click', handleClick );
+    document.addEventListener('keydown', handleKeyPress );
+    document.body.addEventListener('click', handleClick );
 }
 
 function render( game )
 {
-	document.getElementById("word").innerHTML = game.getMaskedWord(); 
-	
-	let guessesContainer = document.getElementById("guesses");
-	guessesContainer.innerHTML = "";
-	
-	let guessedLetters = game.getGuessedLetters();
-	
-	game.getAllLetters().forEach( function(letter) {
-		let isGuessed = guessedLetters.includes(letter);
-		let disabledClass = isGuessed ? " disabled" : "";
-		
-		let innerHtml = "<span class='guess" + disabledClass + "'>" + letter + "</span>";
-		guessesContainer.innerHTML += innerHtml;
-	});
-	
-	document.getElementById("hangmanImage").src = "img/hangman" + game.getIncorrectGuesses() + ".png";
+    document.getElementById("word").innerHTML = game.getMaskedWord(); 
+    
+    document.getElementById("scoreValue").textContent = score;
+    
+    let guessesContainer = document.getElementById("guesses");
+    guessesContainer.innerHTML = "";
+    
+    let guessedLetters = game.getGuessedLetters();
+    
+    game.getAllLetters().forEach( function(letter) {
+        let isGuessed = guessedLetters.includes(letter);
+        let disabledClass = isGuessed ? " disabled" : "";
+        
+        let innerHtml = "<span class='guess" + disabledClass + "'>" + letter + "</span>";
+        guessesContainer.innerHTML += innerHtml;
+    });
+    
+    document.getElementById("hangmanImage").src = "img/hangman" + game.getIncorrectGuesses() + ".png";
 
-	let tipBox = document.getElementById('tipBox');
-	
-	if( game.isWon() )
-	{
-		tipBox.textContent = youWon + " " + tip;
-		tipBox.className = "win";
-	}
-	else if( game.isLost() )
-	{
-		tipBox.textContent = youLost + " " + tip;
-		tipBox.className = "loss";
-	}
-	else
-	{
-		tipBox.textContent = tip;
-		tipBox.className = "";
-	}
+    let tipBox = document.getElementById('tipBox');
+    
+    if( game.isWon() )
+    {
+        tipBox.textContent = youWon + " " + tip;
+        tipBox.className = "win";
+    }
+    else if( game.isLost() )
+    {
+        tipBox.textContent = youLost + " " + tip;
+        tipBox.className = "loss";
+    }
+    else
+    {
+        tipBox.textContent = tip;
+        tipBox.className = "";
+    }
 }
 
 function newGame()
 {
-	history.go(0);
+    history.go(0);
 }
 
 let game = new Game();

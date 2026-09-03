@@ -13,6 +13,7 @@ main {
 }
 
 #gallows {
+  position: relative;
   text-align: center;
   margin-top: 5px;
   margin-bottom: 10px;
@@ -24,6 +25,35 @@ main {
   max-height: 220px;
   display: block;
   margin: 0 auto;
+}
+
+#scoreBox {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgb(255, 255, 153);
+  border-radius: 12px;
+  padding: 6px 14px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+}
+
+.score-label {
+  display: block;
+  font-size: 10pt;
+  text-transform: uppercase;
+  color: #555;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+#scoreValue {
+  display: block;
+  font-size: 22pt;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.1;
 }
 
 #word {
