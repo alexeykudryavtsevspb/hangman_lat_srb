@@ -1400,7 +1400,7 @@ function Game()
 	let maskedWord = "";
 	let incorrectGuesses = 0;
 	
-	const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	const allLetters = 'ABCDEFGHIKLMNOPQRSTVXYZ';
 	let won = false;
 	let lost = false;
 	const maxGuesses = 7;
