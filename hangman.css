@@ -165,6 +165,14 @@ main {
   transform: translateY(3px);
 }
 
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  background-color: #cccccc; /* Серый цвет для неактивной кнопки */
+  color: #666666;
+}
+
 @media only screen and (max-width: 480px) {
   #word {
     font-size: 18pt;

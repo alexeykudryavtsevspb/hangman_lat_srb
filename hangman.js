@@ -1388,6 +1388,7 @@ let audio_no = new Audio("no.mp3");
 let audio_win = new Audio("win.mp3");
 let audio_los = new Audio("los.mp3");
 
+// Считываем счет из localStorage (если его нет — начинаем с 0)
 let score = parseInt(localStorage.getItem('hangman_score')) || 0;
 
 function Game()
@@ -1400,7 +1401,6 @@ function Game()
     let maskedWord = "";
     let incorrectGuesses = 0;
     
-    // Алфавит остаётся классической латынью
     const allLetters = 'ABCDEFGHILMNOPQRSTUVXYZ';
     let won = false;
     let lost = false;
@@ -1470,7 +1470,7 @@ function Game()
         if( lost )
         {
             maskedWord = word;
-			if(!scoreUpdated) {
+            if(!scoreUpdated) {
                 score = Math.max(0, score - 1);
                 localStorage.setItem('hangman_score', score);
                 scoreUpdated = true;
@@ -1570,21 +1570,25 @@ function render( game )
     document.getElementById("hangmanImage").src = "img/hangman" + game.getIncorrectGuesses() + ".png";
 
     let tipBox = document.getElementById('tipBox');
+    let newGameButton = document.getElementById("newGameButton");
     
     if( game.isWon() )
     {
         tipBox.textContent = youWon + " " + tip;
         tipBox.className = "win";
+        newGameButton.disabled = false; // Включаем кнопку при победе
     }
     else if( game.isLost() )
     {
         tipBox.textContent = youLost + " " + tip;
         tipBox.className = "loss";
+        newGameButton.disabled = false;
     }
     else
     {
         tipBox.textContent = tip;
         tipBox.className = "";
+        newGameButton.disabled = true;
     }
 }
 
