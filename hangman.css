@@ -1,0 +1,168 @@
+body {
+  background: rgb(102, 178, 255);
+  margin: 0;
+  padding: 10px;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+main {
+  max-width: 610px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+h1, h5 {
+  text-align: center;
+  color: rgb(255, 255, 153);
+  margin: 10px 0;
+}
+
+/* Виселица и картинка */
+#gallows {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#hangmanImage {
+  max-width: 100%;
+  height: auto;
+  max-height: 250px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Загаданное слово */
+#word {
+  letter-spacing: 6px;
+  text-align: center;
+  font-size: 22pt;
+  color: rgb(255, 255, 153);
+  font-weight: bold;
+  font-family: "Courier New", Courier, monospace;
+  overflow-wrap: break-word;
+  word-break: normal;
+  margin: 15px 0;
+}
+
+/* Кнопка New Game */
+#controls {
+  text-align: center;
+  margin: 15px 0;
+}
+
+.button {
+  display: inline-block;
+  padding: 12px 28px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #444;
+  background-color: rgb(255, 255, 153);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 5px #999;
+  touch-action: manipulation;
+}
+
+.button:hover {
+  background-color: rgb(224, 224, 139);
+}
+
+.button:active {
+  background-color: rgb(224, 224, 139);
+  box-shadow: 0 2px #666;
+  transform: translateY(3px);
+}
+
+/* Клавиатура с буквами (плитки) */
+#guesses {
+  text-align: center;
+  font-size: 16pt;
+  color: rgb(255, 255, 153);
+  font-weight: bold;
+  font-family: "Courier New", Courier, monospace;
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.guess {
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgb(255, 255, 153);
+  border-radius: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  min-width: 20px;
+  font-size: 18pt;
+}
+
+.guess:active {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Блок подсказки и статуса победы/проигрыша */
+#tipBox {
+  min-height: 60px;
+  max-height: 120px;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 14pt;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  overflow-y: auto;
+  word-wrap: break-word;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.win {
+  color: white !important;
+  background-color: #28a745 !important;
+  font-weight: bold;
+}
+
+.loss {
+  color: white !important;
+  background-color: #dc3545 !important;
+  font-weight: bold;
+}
+
+/* Мобильная адаптация под узкие экраны */
+@media only screen and (max-width: 480px) {
+  #word {
+    font-size: 18pt;
+    letter-spacing: 4px;
+  }
+
+  .guess {
+    padding: 8px 11px;
+    font-size: 16pt;
+  }
+
+  .button {
+    width: 80%;
+    font-size: 18px;
+    padding: 12px;
+  }
+}
+
+.guess.disabled {
+  opacity: 0.35;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 153, 0.4);
+  color: rgba(255, 255, 153, 0.5);
+  cursor: default;
+  pointer-events: none;
+}

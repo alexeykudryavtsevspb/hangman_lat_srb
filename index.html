@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="sr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vešala</title>
+    <link rel="stylesheet" href="hangman.css">
+  </head>
+  <body>
+    <main>
+      <h1>Vešala</h1>
+
+      <div id="gallows">
+        <img id="hangmanImage" src="img/hangman0.png" alt="Vešala status">
+      </div>
+
+      <div id="word"></div>
+
+      <div id="controls">
+        <button id="newGameButton" class="button" onclick="newGame();">Nova igra</button>
+      </div>
+
+      <div id="guesses"></div>
+      <div id="tipBox"></div>
+    </main>
+    <script src="hangman.js"></script>
+  </body>
+</html>
