@@ -1380,7 +1380,6 @@ let movies = [
 
 /* Game */
 
-// Сообщения на сербском
 const youWon = "Pobedili ste!";
 const youLost = "Izgubili ste!";
 let tip = ".";
@@ -1400,8 +1399,7 @@ function Game()
 	let guessedLetters = [];
 	let maskedWord = "";
 	let incorrectGuesses = 0;
-
-	// Список всех букв клавиатуры
+	
 	const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 	let won = false;
 	let lost = false;
@@ -1424,13 +1422,13 @@ function Game()
 	{
 		letter = letter.toUpperCase();
 		if( !guessedLetters.includes( letter ) && !won && !lost )
-		{
+		{	
 			guessedLetters.push(letter);
-
+			
 			if( word.includes( letter ) )
 			{
 				let matchingIndexes = [];
-				for ( let i = 0; i < word.length; i++ )
+				for ( let i = 0; i < word.length; i++ ) 
 				{
 					if( word.charAt(i) === letter )
 					{
@@ -1440,12 +1438,11 @@ function Game()
 
 				matchingIndexes.forEach( function(index) {
 					maskedWord = replace( maskedWord, index, letter );
-				});
+				});	
 
 				won = maskedWord === word;
-
+				
 				if(won) {
-					// 1. ПРИ ПОБЕДЕ: открываем все буквы (если вдруг оставались спецсимволы)
 					maskedWord = word;
 					audio_win.play().catch(() => {});
 				} else {
@@ -1465,7 +1462,6 @@ function Game()
 		lost = incorrectGuesses >= maxGuesses;
 		if( lost )
 		{
-			// 1. ПРИ ПОРАЖЕНИИ: открываем все буквы
 			maskedWord = word;
 			audio_los.play().catch(() => {});
 		}
@@ -1487,12 +1483,12 @@ function Game()
 	};
 }
 
-function replace( value, index, replacement )
+function replace( value, index, replacement ) 
 {
 	return value.substring(0, index) + replacement + value.substring(index + replacement.length);
 }
 
-function listenForInput( game )
+function listenForInput( game ) 
 {
 	let guessLetter = function( letter )
 	{
@@ -1509,7 +1505,6 @@ function listenForInput( game )
 
 	let handleClick = function( event )
 	{
-		// Клики принимаются только по активным (не погашенным) буквам
 		if (event.target.classList.contains('guess') && !event.target.classList.contains('disabled'))
 		{
 			guessLetter( event.target.innerHTML.trim() );
@@ -1543,27 +1538,25 @@ function listenForInput( game )
 
 function render( game )
 {
-	document.getElementById("word").innerHTML = game.getMaskedWord();
-
-	// 2. Логика отрисовки клавиатуры:
-	// Все буквы остаются на месте, но угаданные/использованные получают класс "disabled"
+	document.getElementById("word").innerHTML = game.getMaskedWord(); 
+	
 	let guessesContainer = document.getElementById("guesses");
 	guessesContainer.innerHTML = "";
-
+	
 	let guessedLetters = game.getGuessedLetters();
-
+	
 	game.getAllLetters().forEach( function(letter) {
 		let isGuessed = guessedLetters.includes(letter);
 		let disabledClass = isGuessed ? " disabled" : "";
-
+		
 		let innerHtml = "<span class='guess" + disabledClass + "'>" + letter + "</span>";
 		guessesContainer.innerHTML += innerHtml;
 	});
-
+	
 	document.getElementById("hangmanImage").src = "img/hangman" + game.getIncorrectGuesses() + ".png";
 
 	let tipBox = document.getElementById('tipBox');
-
+	
 	if( game.isWon() )
 	{
 		tipBox.textContent = youWon + " " + tip;
