@@ -44,8 +44,8 @@ function getSelectedCategoryData() {
     return GAME_CATEGORIES[firstKey];
 }
 
-// Озвучка слова/фразы
-function speakWord(text) {
+// Озвучка слова/фразы с поддержкой callback-функции после завершения речи
+function speakWord(text, onEndCallback) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
 
@@ -56,7 +56,20 @@ function speakWord(text) {
         utterance.lang = categoryData.lang || 'it-IT'; 
         utterance.rate = 0.8;
 
+        if (onEndCallback) {
+            utterance.onend = function() {
+                onEndCallback();
+            };
+            // Фолбэк на случай ошибки синтеза речи
+            utterance.onerror = function() {
+                onEndCallback();
+            };
+        }
+
         window.speechSynthesis.speak(utterance);
+    } else if (onEndCallback) {
+        // Если SpeechSynthesis не поддерживается браузером
+        onEndCallback();
     }
 }
 
@@ -147,8 +160,10 @@ function Game()
                         localStorage.setItem('hangman_score', score);
                         scoreUpdated = true;
                     }
-                    audio_win.play().catch(() => {});
-                    speakWord(word); // Озвучка при победе
+                    // Сначала озвучиваем слово, затем воспроизводим победный звук
+                    speakWord(word, function() {
+                        audio_win.play().catch(() => {});
+                    });
                 } else {
                     audio_yes.play().catch(() => {});
                 }
@@ -172,8 +187,10 @@ function Game()
                 localStorage.setItem('hangman_score', score);
                 scoreUpdated = true;
             }
-            audio_los.play().catch(() => {});
-            speakWord(word); // Озвучка при поражении
+            // Сначала озвучиваем слово, затем воспроизводим звук проигрыша
+            speakWord(word, function() {
+                audio_los.play().catch(() => {});
+            });
         }
         else
         {
@@ -272,12 +289,11 @@ function render( game )
     let categorySelect = document.getElementById("categorySelect");
     let hangmanImg = document.getElementById("hangmanImage");
 
-    // Подсказка выводится всегда в неизменном виде
     tipBox.textContent = tip;
 
     if( game.isWon() )
     {
-        hangmanImg.src = "img/hangman_win.jpeg"; // Картинка победы
+        hangmanImg.src = "img/hangman_win.jpeg";
         tipBox.className = "win";
         newGameButton.disabled = false;
         if (categorySelect) categorySelect.disabled = false;
