@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Вешала</title>
-    <link rel="stylesheet" href="hangman.css?v=5">
+    <link rel="stylesheet" href="hangman.css?v=9">
   </head>
   <body>
     <main>
@@ -18,13 +18,25 @@
           <span id="highScoreValue">0</span>
         </div>
       </div>
+      
       <div id="word"></div>
       <div id="tipBox"></div>
       <div id="guesses"></div>
+      
       <div id="controls">
         <button id="newGameButton" class="button" onclick="newGame();" disabled>Нова игра</button>
+        
+        <div id="categoryContainer">
+          <label for="categorySelect">Изаберите категорију:</label>
+          <select id="categorySelect" onchange="onCategoryChange();"></select>
+        </div>
       </div>
     </main>
-    <script src="hangman.js?v=5"></script>
+
+    <script src="words_anatomija_1.js?v=9"></script>
+    <script src="words_phrases.js?v=9"></script>
+    <script src="config.js?v=9"></script>
+
+    <script src="hangman.js?v=9"></script>
   </body>
 </html>

@@ -205,3 +205,36 @@ main {
     padding: 12px;
   }
 }
+
+#categoryContainer {
+  margin-top: 15px;
+  text-align: center;
+}
+
+#categoryContainer label {
+  display: block;
+  font-size: 11pt;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+#categorySelect {
+  padding: 8px 16px;
+  font-size: 14pt;
+  border-radius: 8px;
+  border: 2px solid rgb(255, 255, 153);
+  background-color: #fff;
+  color: #333;
+  font-weight: bold;
+  outline: none;
+  cursor: pointer;
+  max-width: 90%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#categorySelect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #eee;
+}
