@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Кафана</title>
-    <link rel="stylesheet" href="hangman.css?v=9">
+    <link rel="stylesheet" href="hangman.css?v=12">
   </head>
   <body>
     <main>
+      <!-- Рисунок и табло рекордов -->
       <div id="gallows">
-        <img id="hangmanImage" src="img/hangman0.png" alt="Кафана статус">
+        <img id="hangmanImage" src="img/hangman0.jpeg" alt="">
         <div id="scoreBox">
           <span class="score-label">Резултат</span>
           <span id="scoreValue">0</span>
@@ -19,10 +20,21 @@
         </div>
       </div>
       
+      <!-- Загаданное слово -->
       <div id="word"></div>
-      <div id="tipBox"></div>
+
+      <!-- Подсказка и кнопка озвучки -->
+      <div id="tipContainer">
+        <button id="hintButton" class="hint-button" onclick="useHint();">
+          🔊 Слушај фрау (-1 бод)
+        </button>
+        <div id="tipBox" style="display: none;"></div>
+      </div>
+
+      <!-- Клавиатура -->
       <div id="guesses"></div>
       
+      <!-- Управление -->
       <div id="controls">
         <button id="newGameButton" class="button" onclick="newGame();" disabled>Нова игра</button>
         
@@ -33,10 +45,14 @@
       </div>
     </main>
 
-    <script src="words_anatomija_1.js?v=9"></script>
-    <script src="words_phrases.js?v=9"></script>
-    <script src="config.js?v=9"></script>
+    <!-- 1. Словари (Исправлены имена файлов) -->
+    <script src="words_anatomija_1.js?v=12"></script>
+    <script src="words_phrases.js?v=12"></script>
+    
+    <!-- 2. Конфигурация -->
+    <script src="config.js?v=12"></script>
 
-    <script src="hangman.js?v=9"></script>
+    <!-- 3. Основная логика -->
+    <script src="hangman.js?v=12"></script>
   </body>
 </html>

@@ -18,16 +18,18 @@ main {
   text-align: center;
   margin-top: 5px;
   margin-bottom: 10px;
+  min-height: 200px;
 }
 
 #hangmanImage {
   max-width: 100%;
   height: auto;
   max-height: 240px;
+  min-height: 200px;
   display: block;
   margin: 0 auto;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  object-fit: cover;
 }
 
 /* Перенесено в левый верхний угол + тёплые цвета плашки */
@@ -251,4 +253,32 @@ main {
     font-size: 18px;
     padding: 12px;
   }
+}
+
+#tipContainer {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.hint-button {
+  background-color: #d4a359;
+  color: #2b1d14;
+  border: none;
+  padding: 8px 16px;
+  font-size: 13pt;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 3px rgba(0,0,0,0.3);
+  transition: background-color 0.2s;
+}
+
+.hint-button:hover {
+  background-color: #ebd185;
+}
+
+.hint-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
 }

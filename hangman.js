@@ -2,14 +2,20 @@ const youWon = "Победили сте!";
 const youLost = "Изгубили сте!";
 let tip = ".";
 
+// Пути к аудио с учетом папки audio/
 let audio_yes = new Audio("audio/yes.mp3");
 let audio_no = new Audio("audio/no.mp3");
 let audio_win = new Audio("audio/win.mp3");
 let audio_los = new Audio("audio/los.mp3");
 
+// Считываем счет и рекорд из localStorage
 let score = parseInt(localStorage.getItem('hangman_score')) || 0;
 let highScore = parseInt(localStorage.getItem('hangman_high_score')) || 0;
 
+// Флаг, чтобы снимать балл за подсказку только 1 раз за раунд
+let hintUsed = false;
+
+// Инициализация выпадающего списка категорий из config.js
 function initCategorySelect() {
     let select = document.getElementById("categorySelect");
     if (!select) return;
@@ -33,6 +39,7 @@ function initCategorySelect() {
     }
 }
 
+// Получаем данные выбранной категории из config.js
 function getSelectedCategoryData() {
     let selectedCategory = localStorage.getItem('hangman_category');
     if (GAME_CATEGORIES[selectedCategory]) {
@@ -42,8 +49,52 @@ function getSelectedCategoryData() {
     return GAME_CATEGORIES[firstKey];
 }
 
+// Озвучка загаданного слова/фразы
+function speakWord(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+
+        // Переводим в нижний регистр для избежания чтения по буквам
+        let cleanText = text.toLowerCase().trim();
+
+        let utterance = new SpeechSynthesisUtterance(cleanText);
+        let categoryData = getSelectedCategoryData();
+        
+        utterance.lang = categoryData.lang || 'it-IT'; 
+        utterance.rate = 0.8;
+
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+// Обработка кнопки подсказки
+function useHint() {
+    let hintBtn = document.getElementById("hintButton");
+    let tipBox = document.getElementById("tipBox");
+
+    if (typeof game !== 'undefined') {
+        speakWord(game.getWord());
+    }
+
+    if (tipBox) {
+        tipBox.style.display = "block";
+    }
+
+    if (!hintUsed) {
+        score = Math.max(0, score - 1);
+        localStorage.setItem('hangman_score', score);
+        document.getElementById("scoreValue").textContent = score;
+        hintUsed = true;
+        
+        if (hintBtn) {
+            hintBtn.textContent = "🔊 Слушај поново";
+        }
+    }
+}
+
 function Game()
 {
+    hintUsed = false;
     let categoryData = getSelectedCategoryData();
     let currentWords = categoryData.words;
     let index = Math.floor(Math.random() * currentWords.length);
@@ -228,6 +279,7 @@ function render( game )
     document.getElementById("hangmanImage").src = "img/hangman" + game.getIncorrectGuesses() + ".jpeg";
 
     let tipBox = document.getElementById('tipBox');
+    let hintBtn = document.getElementById("hintButton");
     let newGameButton = document.getElementById("newGameButton");
     let categorySelect = document.getElementById("categorySelect");
     
@@ -235,22 +287,35 @@ function render( game )
     {
         tipBox.textContent = youWon + " " + tip;
         tipBox.className = "win";
+        tipBox.style.display = "block";
         newGameButton.disabled = false;
         if (categorySelect) categorySelect.disabled = false;
+        if (hintBtn) hintBtn.disabled = true;
     }
     else if( game.isLost() )
     {
         tipBox.textContent = youLost + " " + tip;
         tipBox.className = "loss";
+        tipBox.style.display = "block";
         newGameButton.disabled = false;
         if (categorySelect) categorySelect.disabled = false;
+        if (hintBtn) hintBtn.disabled = true;
     }
     else
     {
         tipBox.textContent = tip;
         tipBox.className = "";
+        
+        if (!hintUsed) {
+            tipBox.style.display = "none";
+            if (hintBtn) hintBtn.textContent = "🔊 Слушај фрау (-1 бод)";
+        } else {
+            tipBox.style.display = "block";
+        }
+        
         newGameButton.disabled = true;
         if (categorySelect) categorySelect.disabled = true;
+        if (hintBtn) hintBtn.disabled = false;
     }
 }
 
@@ -267,7 +332,7 @@ function newGame()
     history.go(0);
 }
 
-// Запуск
+// Запуск игры
 initCategorySelect();
 let game = new Game();
 render( game );
