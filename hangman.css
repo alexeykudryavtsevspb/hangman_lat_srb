@@ -1,5 +1,6 @@
 body {
-  background: rgb(102, 178, 255);
+  background-color: #2b1d14; /* Уютный тёмно-древесный фон под интерьер кафаны */
+  color: #f5e9da;
   margin: 0;
   padding: 10px;
   box-sizing: border-box;
@@ -22,50 +23,53 @@ main {
 #hangmanImage {
   max-width: 100%;
   height: auto;
-  max-height: 220px;
+  max-height: 240px;
   display: block;
   margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
+/* Перенесено в левый верхний угол + тёплые цвета плашки */
 #scoreBox {
   position: absolute;
-  top: 5px;
-  right: 10px;
-  background-color: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgb(255, 255, 153);
-  border-radius: 12px;
-  padding: 6px 12px;
+  top: 10px;
+  left: 10px; /* Сдвинуто влево, чтобы не перекрывать печь */
+  background-color: rgba(255, 248, 235, 0.92);
+  border: 2px solid #d4a359;
+  border-radius: 10px;
+  padding: 4px 10px;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-  min-width: 75px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  min-width: 65px;
 }
 
 .score-label {
   display: block;
-  font-size: 8pt;
+  font-size: 7.5pt;
   text-transform: uppercase;
-  color: #555;
+  color: #5a4332;
   font-weight: bold;
   letter-spacing: 0.5px;
 }
 
 #scoreValue {
   display: block;
-  font-size: 18pt;
+  font-size: 16pt;
   font-weight: bold;
-  color: #222;
+  color: #2b1d14;
   line-height: 1;
 }
 
 .score-divider {
   height: 1px;
-  background-color: #ddd;
-  margin: 4px 0;
+  background-color: #d4a359;
+  margin: 3px 0;
 }
 
 #highScoreValue {
   display: block;
-  font-size: 16pt;
+  font-size: 15pt;
   font-weight: bold;
   color: #28a745;
   line-height: 1;
@@ -75,12 +79,13 @@ main {
   letter-spacing: 6px;
   text-align: center;
   font-size: 22pt;
-  color: rgb(255, 255, 153);
+  color: #fce8a6; /* Тёплый соломенно-жёлтый */
   font-weight: bold;
   font-family: "Courier New", Courier, monospace;
   overflow-wrap: break-word;
   word-break: normal;
   margin: 10px 0;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
 }
 
 #tipBox {
@@ -91,8 +96,9 @@ main {
   font-size: 14pt;
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
+  border: 1px solid #d4a359;
+  background-color: rgba(255, 248, 235, 0.95);
+  color: #2b1d14;
   overflow-y: auto;
   word-wrap: break-word;
   margin: 10px 0;
@@ -103,18 +109,20 @@ main {
   color: white !important;
   background-color: #28a745 !important;
   font-weight: bold;
+  border-color: #1e7e34 !important;
 }
 
 .loss {
   color: white !important;
   background-color: #dc3545 !important;
   font-weight: bold;
+  border-color: #bd2130 !important;
 }
 
 #guesses {
   text-align: center;
   font-size: 16pt;
-  color: rgb(255, 255, 153);
+  color: #fce8a6;
   font-weight: bold;
   font-family: "Courier New", Courier, monospace;
   margin: 10px 0;
@@ -129,8 +137,10 @@ main {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgb(255, 255, 153);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid #d4a359;
   border-radius: 10px;
+  color: #fce8a6;
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
@@ -138,16 +148,19 @@ main {
   font-size: 18pt;
 }
 
+.guess:hover {
+  background-color: rgba(212, 163, 89, 0.3);
+}
+
 .guess.disabled {
-  opacity: 0.35;
-  background-color: rgba(0, 0, 0, 0.15);
-  border-color: rgba(255, 255, 153, 0.4);
-  color: rgba(255, 255, 153, 0.5);
+  opacity: 0.3;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-color: rgba(212, 163, 89, 0.3);
+  color: rgba(252, 232, 166, 0.4);
   cursor: default;
   pointer-events: none;
 }
 
-/* 6. Кнопка New Game внизу */
 #controls {
   text-align: center;
   margin: 15px 0 10px 0;
@@ -162,30 +175,64 @@ main {
   text-align: center;
   text-decoration: none;
   outline: none;
-  color: #444;
-  background-color: rgb(255, 255, 153);
+  color: #2b1d14;
+  background-color: #fce8a6;
   border: none;
   border-radius: 12px;
-  box-shadow: 0 5px #999;
+  box-shadow: 0 5px #8c6d3b;
   touch-action: manipulation;
 }
 
 .button:hover {
-  background-color: rgb(224, 224, 139);
+  background-color: #ebd185;
 }
 
 .button:active {
-  background-color: rgb(224, 224, 139);
-  box-shadow: 0 2px #666;
+  background-color: #ebd185;
+  box-shadow: 0 2px #5a4332;
   transform: translateY(3px);
 }
 
 .button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   box-shadow: none;
-  background-color: #cccccc; /* Серый цвет для неактивной кнопки */
-  color: #666666;
+  background-color: #6c5a4c;
+  color: #a8998c;
+}
+
+#categoryContainer {
+  margin-top: 15px;
+  text-align: center;
+}
+
+#categoryContainer label {
+  display: block;
+  font-size: 11pt;
+  font-weight: bold;
+  color: #fce8a6;
+  margin-bottom: 5px;
+}
+
+#categorySelect {
+  padding: 8px 16px;
+  font-size: 14pt;
+  border-radius: 8px;
+  border: 2px solid #d4a359;
+  background-color: rgba(255, 248, 235, 0.95);
+  color: #2b1d14;
+  font-weight: bold;
+  outline: none;
+  cursor: pointer;
+  max-width: 90%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+#categorySelect:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #6c5a4c;
+  color: #a8998c;
 }
 
 @media only screen and (max-width: 480px) {
@@ -204,37 +251,4 @@ main {
     font-size: 18px;
     padding: 12px;
   }
-}
-
-#categoryContainer {
-  margin-top: 15px;
-  text-align: center;
-}
-
-#categoryContainer label {
-  display: block;
-  font-size: 11pt;
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 5px;
-}
-
-#categorySelect {
-  padding: 8px 16px;
-  font-size: 14pt;
-  border-radius: 8px;
-  border: 2px solid rgb(255, 255, 153);
-  background-color: #fff;
-  color: #333;
-  font-weight: bold;
-  outline: none;
-  cursor: pointer;
-  max-width: 90%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-#categorySelect:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: #eee;
 }
