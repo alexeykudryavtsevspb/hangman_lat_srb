@@ -1,8 +1,6 @@
-const youWon = "Победили сте!";
-const youLost = "Изгубили сте!";
 let tip = ".";
 
-// Пути к аудио с учетом папки audio/
+// Пути к аудио
 let audio_yes = new Audio("audio/yes.mp3");
 let audio_no = new Audio("audio/no.mp3");
 let audio_win = new Audio("audio/win.mp3");
@@ -12,10 +10,8 @@ let audio_los = new Audio("audio/los.mp3");
 let score = parseInt(localStorage.getItem('hangman_score')) || 0;
 let highScore = parseInt(localStorage.getItem('hangman_high_score')) || 0;
 
-// Флаг, чтобы снимать балл за подсказку только 1 раз за раунд
 let hintUsed = false;
 
-// Инициализация выпадающего списка категорий из config.js
 function initCategorySelect() {
     let select = document.getElementById("categorySelect");
     if (!select) return;
@@ -39,7 +35,6 @@ function initCategorySelect() {
     }
 }
 
-// Получаем данные выбранной категории из config.js
 function getSelectedCategoryData() {
     let selectedCategory = localStorage.getItem('hangman_category');
     if (GAME_CATEGORIES[selectedCategory]) {
@@ -49,14 +44,12 @@ function getSelectedCategoryData() {
     return GAME_CATEGORIES[firstKey];
 }
 
-// Озвучка загаданного слова/фразы
+// Озвучка слова/фразы
 function speakWord(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
 
-        // Переводим в нижний регистр для избежания чтения по буквам
         let cleanText = text.toLowerCase().trim();
-
         let utterance = new SpeechSynthesisUtterance(cleanText);
         let categoryData = getSelectedCategoryData();
         
@@ -67,17 +60,12 @@ function speakWord(text) {
     }
 }
 
-// Обработка кнопки подсказки
+// По нажатию на кнопку - только озвучиваем и списываем балл
 function useHint() {
     let hintBtn = document.getElementById("hintButton");
-    let tipBox = document.getElementById("tipBox");
 
     if (typeof game !== 'undefined') {
         speakWord(game.getWord());
-    }
-
-    if (tipBox) {
-        tipBox.style.display = "block";
     }
 
     if (!hintUsed) {
@@ -160,6 +148,7 @@ function Game()
                         scoreUpdated = true;
                     }
                     audio_win.play().catch(() => {});
+                    speakWord(word); // Озвучка при победе
                 } else {
                     audio_yes.play().catch(() => {});
                 }
@@ -184,6 +173,7 @@ function Game()
                 scoreUpdated = true;
             }
             audio_los.play().catch(() => {});
+            speakWord(word); // Озвучка при поражении
         }
         else
         {
@@ -276,41 +266,38 @@ function render( game )
         guessesContainer.innerHTML += innerHtml;
     });
     
-    document.getElementById("hangmanImage").src = "img/hangman" + game.getIncorrectGuesses() + ".jpeg";
-
     let tipBox = document.getElementById('tipBox');
     let hintBtn = document.getElementById("hintButton");
     let newGameButton = document.getElementById("newGameButton");
     let categorySelect = document.getElementById("categorySelect");
-    
+    let hangmanImg = document.getElementById("hangmanImage");
+
+    // Подсказка выводится всегда в неизменном виде
+    tipBox.textContent = tip;
+
     if( game.isWon() )
     {
-        tipBox.textContent = youWon + " " + tip;
+        hangmanImg.src = "img/hangman_win.jpeg"; // Картинка победы
         tipBox.className = "win";
-        tipBox.style.display = "block";
         newGameButton.disabled = false;
         if (categorySelect) categorySelect.disabled = false;
         if (hintBtn) hintBtn.disabled = true;
     }
     else if( game.isLost() )
     {
-        tipBox.textContent = youLost + " " + tip;
+        hangmanImg.src = "img/hangman" + game.getIncorrectGuesses() + ".jpeg";
         tipBox.className = "loss";
-        tipBox.style.display = "block";
         newGameButton.disabled = false;
         if (categorySelect) categorySelect.disabled = false;
         if (hintBtn) hintBtn.disabled = true;
     }
     else
     {
-        tipBox.textContent = tip;
+        hangmanImg.src = "img/hangman" + game.getIncorrectGuesses() + ".jpeg";
         tipBox.className = "";
         
         if (!hintUsed) {
-            tipBox.style.display = "none";
             if (hintBtn) hintBtn.textContent = "🔊 Слушај фрау (-1 бод)";
-        } else {
-            tipBox.style.display = "block";
         }
         
         newGameButton.disabled = true;
