@@ -4,7 +4,7 @@ let tip = ".";
 let audio_yes = new Audio("audio/yes.wav");
 let audio_no = new Audio("audio/no.wav");
 let audio_win = new Audio("audio/win.mp3");
-let audio_los = new Audio("audio/los.mp3");
+let audio_los = new Audio("audio/fajront.mp3");
 
 // Считываем счет и рекорд из localStorage
 let score = parseInt(localStorage.getItem('hangman_score')) || 0;
