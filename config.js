@@ -10,11 +10,12 @@ const GAME_CATEGORIES = {
         words: words_phrases,
         allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
         lang: "la"
-    },
-    "test": {
-        title: "Test",
-        words: words_test,
-        allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
-        lang: "la"
-    }    
+    }
+    // ,
+    // "test": {
+    //     title: "Test",
+    //     words: words_test,
+    //     allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
+    //     lang: "la"
+    // }
 };
