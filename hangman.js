@@ -12,6 +12,14 @@ let highScore = parseInt(localStorage.getItem('hangman_high_score')) || 0;
 
 let hintUsed = false;
 
+// Предзагрузка голосов для Chrome
+if ('speechSynthesis' in window) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+    };
+}
+
 function initCategorySelect() {
     let select = document.getElementById("categorySelect");
     if (!select) return;
@@ -44,36 +52,57 @@ function getSelectedCategoryData() {
     return GAME_CATEGORIES[firstKey];
 }
 
-// Озвучка слова/фразы с поддержкой callback-функции после завершения речи
+// Поиск наилучшего голоса для латыни (Итальянский / Испанский)
+function getBestVoice() {
+    if (!('speechSynthesis' in window)) return null;
+    let voices = window.speechSynthesis.getVoices();
+    
+    return voices.find(v => v.lang === 'it-IT') ||
+           voices.find(v => v.lang.startsWith('it')) ||
+           voices.find(v => v.lang.startsWith('es')) || null;
+}
+
+// Улучшенная функция озвучки
 function speakWord(text, onEndCallback) {
+    let cleanText = text.toLowerCase().trim();
+
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
 
-        let cleanText = text.toLowerCase().trim();
-        let utterance = new SpeechSynthesisUtterance(cleanText);
-        let categoryData = getSelectedCategoryData();
-        
-        utterance.lang = categoryData.lang || 'it-IT'; 
-        utterance.rate = 0.8;
+        let bestVoice = getBestVoice();
 
-        if (onEndCallback) {
-            utterance.onend = function() {
-                onEndCallback();
-            };
-            // Фолбэк на случай ошибки синтеза речи
-            utterance.onerror = function() {
-                onEndCallback();
-            };
+        if (bestVoice) {
+            let utterance = new SpeechSynthesisUtterance(cleanText);
+            // ЯВНОЕ НАЗНАЧЕНИЕ ГОЛОСА (решает проблему с чтением на en-US)
+            utterance.voice = bestVoice;
+            utterance.lang = bestVoice.lang;
+            utterance.rate = 0.8;
+
+            if (onEndCallback) {
+                utterance.onend = onEndCallback;
+                utterance.onerror = onEndCallback;
+            }
+
+            window.speechSynthesis.speak(utterance);
+            return;
         }
-
-        window.speechSynthesis.speak(utterance);
-    } else if (onEndCallback) {
-        // Если SpeechSynthesis не поддерживается браузером
-        onEndCallback();
     }
+
+    // ФОЛБЭК: Если голосовой движок недоступен или голос не найден
+    let encodedText = encodeURIComponent(cleanText);
+    let ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=la&client=tw-ob`;
+    let ttsAudio = new Audio(ttsUrl);
+
+    if (onEndCallback) {
+        ttsAudio.onended = onEndCallback;
+        ttsAudio.onerror = onEndCallback;
+    }
+
+    ttsAudio.play().catch(() => {
+        if (onEndCallback) onEndCallback();
+    });
 }
 
-// По нажатию на кнопку - только озвучиваем и списываем балл
 function useHint() {
     let hintBtn = document.getElementById("hintButton");
 
@@ -160,7 +189,6 @@ function Game()
                         localStorage.setItem('hangman_score', score);
                         scoreUpdated = true;
                     }
-                    // Сначала озвучиваем слово, затем воспроизводим победный звук
                     speakWord(word, function() {
                         audio_win.play().catch(() => {});
                     });
@@ -187,7 +215,6 @@ function Game()
                 localStorage.setItem('hangman_score', score);
                 scoreUpdated = true;
             }
-            // Сначала озвучиваем слово, затем воспроизводим звук проигрыша
             speakWord(word, function() {
                 audio_los.play().catch(() => {});
             });
