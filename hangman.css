@@ -32,49 +32,59 @@ main {
   object-fit: cover;
 }
 
-/* Перенесено в левый верхний угол + тёплые цвета плашки */
+/* Компактный плашка счета и прогресса в левом верхнем углу */
 #scoreBox {
   position: absolute;
   top: 10px;
-  left: 10px; /* Сдвинуто влево, чтобы не перекрывать печь */
-  background-color: rgba(255, 248, 235, 0.92);
-  border: 2px solid #d4a359;
-  border-radius: 10px;
-  padding: 4px 10px;
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  min-width: 65px;
-}
-
-.score-label {
-  display: block;
-  font-size: 7.5pt;
-  text-transform: uppercase;
-  color: #5a4332;
+  left: 10px;
+  background: rgba(254, 243, 199, 0.95);
+  border: 2px solid #b45309;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
   font-weight: bold;
-  letter-spacing: 0.5px;
+  color: #451a03;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  z-index: 10;
 }
 
-#scoreValue {
-  display: block;
-  font-size: 16pt;
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.2;
+}
+
+.stats-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.stats-divider {
+  color: #d97706;
+  opacity: 0.6;
+}
+
+.progress-row {
+  color: #047857; /* Темно-зеленый оттенок для прогресса обучения */
+  border-top: 1px solid rgba(180, 83, 9, 0.25);
+  padding-top: 3px;
+  margin-top: 1px;
+}
+
+/* Исправлено: убираем старый крупный зеленый блок для highScoreValue */
+#highScoreValue, #scoreValue {
+  display: inline;
+  font-size: inherit;
   font-weight: bold;
-  color: #2b1d14;
-  line-height: 1;
-}
-
-.score-divider {
-  height: 1px;
-  background-color: #d4a359;
-  margin: 3px 0;
-}
-
-#highScoreValue {
-  display: block;
-  font-size: 15pt;
-  font-weight: bold;
-  color: #28a745;
-  line-height: 1;
+  color: inherit;
+  line-height: inherit;
 }
 
 #word {
@@ -237,24 +247,6 @@ main {
   color: #a8998c;
 }
 
-@media only screen and (max-width: 480px) {
-  #word {
-    font-size: 18pt;
-    letter-spacing: 4px;
-  }
-
-  .guess {
-    padding: 8px 11px;
-    font-size: 16pt;
-  }
-
-  .button {
-    width: 80%;
-    font-size: 18px;
-    padding: 12px;
-  }
-}
-
 #tipContainer {
   margin: 10px 0;
   text-align: center;
@@ -281,4 +273,22 @@ main {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+@media only screen and (max-width: 480px) {
+  #word {
+    font-size: 18pt;
+    letter-spacing: 4px;
+  }
+
+  .guess {
+    padding: 8px 11px;
+    font-size: 16pt;
+  }
+
+  .button {
+    width: 80%;
+    font-size: 18px;
+    padding: 12px;
+  }
 }

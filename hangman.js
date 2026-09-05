@@ -6,19 +6,139 @@ let audio_no = new Audio("audio/no.wav");
 let audio_win = new Audio("audio/win.mp3");
 let audio_los = new Audio("audio/fajront.mp3");
 
-// Считываем счет и рекорд из localStorage
 let score = parseInt(localStorage.getItem('hangman_score')) || 0;
 let highScore = parseInt(localStorage.getItem('hangman_high_score')) || 0;
 
 let hintUsed = false;
+let game = null; // Глобальный экземпляр текущей игры
 
-// Предзагрузка голосов для Chrome
+// Предзагрузка голосов
 if ('speechSynthesis' in window) {
     window.speechSynthesis.getVoices();
     window.speechSynthesis.onvoiceschanged = () => {
         window.speechSynthesis.getVoices();
     };
 }
+
+// --- СИСТЕМА ИНТЕРВАЛЬНОГО ПОВТОРЕНИЯ (SRS) ---
+
+function getCategoryStatsKey() {
+    let selectedCategory = localStorage.getItem('hangman_category') || Object.keys(GAME_CATEGORIES)[0];
+    return 'hangman_stats_' + selectedCategory;
+}
+
+function loadCategoryStats() {
+    let key = getCategoryStatsKey();
+    return JSON.parse(localStorage.getItem(key)) || {};
+}
+
+function saveCategoryStats(stats) {
+    let key = getCategoryStatsKey();
+    localStorage.setItem(key, JSON.stringify(stats));
+}
+
+// Расчет текущего слова по алгоритму рулетки (Weighted Random Choice)
+function selectWeightedWord(words) {
+    let stats = loadCategoryStats();
+    let now = Date.now();
+    
+    let weights = words.map(item => {
+        let wordKey = item[0].toUpperCase();
+        let wordData = stats[wordKey] || { level: 0, totalErrors: 0, lastSeen: 0 };
+        
+        let level = wordData.level || 0;
+        let totalErrors = wordData.totalErrors || 0;
+        let lastSeen = wordData.lastSeen || 0;
+        
+        // 1. Базовый вес по уровню (0 уровень = максимальный приоритет)
+        let baseWeights = [100, 40, 15, 5, 2, 1];
+        let baseWeight = baseWeights[level] || 1;
+        
+        // 2. Фактор ошибок (+20% веса за каждую историческую ошибку)
+        let errorFactor = 1 + (totalErrors * 0.2);
+        
+        // 3. Фактор времени (Интервалы: L0=0д, L1=1д, L2=3д, L3=7д, L4=14д, L5=30д)
+        let intervals = [0, 1, 3, 7, 14, 30];
+        let targetIntervalDays = intervals[level] || 30;
+        
+        let timeFactor = 1;
+        if (lastSeen > 0 && targetIntervalDays > 0) {
+            let daysPassed = (now - lastSeen) / (1000 * 60 * 60 * 24);
+            timeFactor = 1 + Math.pow(daysPassed / targetIntervalDays, 2);
+        }
+        
+        return baseWeight * errorFactor * timeFactor;
+    });
+
+    let totalWeight = weights.reduce((a, b) => a + b, 0);
+    let randomNum = Math.random() * totalWeight;
+    
+    for (let i = 0; i < words.length; i++) {
+        randomNum -= weights[i];
+        if (randomNum <= 0) {
+            return words[i];
+        }
+    }
+    return words[0];
+}
+
+// Обновление прогресса слова по итогам раунда
+function updateWordProgress(wordText, mistakes, usedHint) {
+    let stats = loadCategoryStats();
+    let wordKey = wordText.toUpperCase();
+    let wordData = stats[wordKey] || { level: 0, totalErrors: 0, lastSeen: 0 };
+    
+    let currentLevel = wordData.level || 0;
+    let totalErrors = wordData.totalErrors || 0;
+    
+    totalErrors += mistakes;
+    
+    let newLevel = currentLevel;
+    
+    if (mistakes >= 3) {
+        newLevel = 0; // При частых ошибках/проиграше сбрасываем уровень
+    } else if (usedHint) {
+        newLevel = Math.max(0, currentLevel - 1); // Подсказка снижает уровень на 1
+    } else if (mistakes === 0) {
+        newLevel = Math.min(5, currentLevel + 1); // Идеальное решение поднимает уровень
+    }
+    
+    stats[wordKey] = {
+        level: newLevel,
+        totalErrors: totalErrors,
+        lastSeen: Date.now()
+    };
+    
+    saveCategoryStats(stats);
+}
+
+// Расчет общего процента изученности категории
+function calculateCategoryProgress() {
+    let categoryData = getSelectedCategoryData();
+    let words = categoryData.words;
+    let stats = loadCategoryStats();
+    
+    let currentPoints = 0;
+    let maxPoints = words.length * 5; // Максимальный уровень каждого слова = 5
+    
+    words.forEach(item => {
+        let wordKey = item[0].toUpperCase();
+        if (stats[wordKey] && stats[wordKey].level) {
+            currentPoints += stats[wordKey].level;
+        }
+    });
+    
+    let rawPercentage = maxPoints > 0 ? (currentPoints / maxPoints) * 100 : 0;
+    let percentage = Number(rawPercentage.toFixed(1));
+    
+    return {
+        current: currentPoints,
+        max: maxPoints,
+        percentage: percentage
+    };
+}
+
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 
 function initCategorySelect() {
     let select = document.getElementById("categorySelect");
@@ -52,7 +172,6 @@ function getSelectedCategoryData() {
     return GAME_CATEGORIES[firstKey];
 }
 
-// Поиск наилучшего голоса для латыни (Итальянский / Испанский)
 function getBestVoice() {
     if (!('speechSynthesis' in window)) return null;
     let voices = window.speechSynthesis.getVoices();
@@ -62,18 +181,15 @@ function getBestVoice() {
            voices.find(v => v.lang.startsWith('es')) || null;
 }
 
-// Улучшенная функция озвучки
 function speakWord(text, onEndCallback) {
     let cleanText = text.toLowerCase().trim();
 
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-
         let bestVoice = getBestVoice();
 
         if (bestVoice) {
             let utterance = new SpeechSynthesisUtterance(cleanText);
-            // ЯВНОЕ НАЗНАЧЕНИЕ ГОЛОСА (решает проблему с чтением на en-US)
             utterance.voice = bestVoice;
             utterance.lang = bestVoice.lang;
             utterance.rate = 0.8;
@@ -88,7 +204,6 @@ function speakWord(text, onEndCallback) {
         }
     }
 
-    // ФОЛБЭК: Если голосовой движок недоступен или голос не найден
     let encodedText = encodeURIComponent(cleanText);
     let ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=la&client=tw-ob`;
     let ttsAudio = new Audio(ttsUrl);
@@ -106,7 +221,7 @@ function speakWord(text, onEndCallback) {
 function useHint() {
     let hintBtn = document.getElementById("hintButton");
 
-    if (typeof game !== 'undefined') {
+    if (game) {
         speakWord(game.getWord());
     }
 
@@ -122,15 +237,19 @@ function useHint() {
     }
 }
 
+// --- ЛОГИКА ИГРЫ ---
+
 function Game()
 {
     hintUsed = false;
     let categoryData = getSelectedCategoryData();
     let currentWords = categoryData.words;
-    let index = Math.floor(Math.random() * currentWords.length);
-    let word = currentWords[index][0];
-    tip = currentWords[index][1];
+    
+    let selectedItem = selectWeightedWord(currentWords);
+    let word = selectedItem[0];
+    tip = selectedItem[1];
     word = word.toUpperCase();
+    
     let guessedLetters = [];
     let maskedWord = "";
     let incorrectGuesses = 0;
@@ -187,6 +306,8 @@ function Game()
                             localStorage.setItem('hangman_high_score', highScore);
                         }
                         localStorage.setItem('hangman_score', score);
+                        
+                        updateWordProgress(word, incorrectGuesses, hintUsed);
                         scoreUpdated = true;
                     }
                     speakWord(word, function() {
@@ -213,6 +334,8 @@ function Game()
             if(!scoreUpdated) {
                 score = Math.max(0, score - 1);
                 localStorage.setItem('hangman_score', score);
+                
+                updateWordProgress(word, incorrectGuesses, hintUsed);
                 scoreUpdated = true;
             }
             speakWord(word, function() {
@@ -242,17 +365,17 @@ function replace( value, index, replacement )
     return value.substring(0, index) + replacement + value.substring(index + replacement.length);
 }
 
-function listenForInput( game ) 
+function listenForInput() 
 {
     let guessLetter = function( letter )
     {
-        if( letter && game.getAllLetters().includes(letter) )
+        if( game && letter && game.getAllLetters().includes(letter) )
         {
             let gameStillGoing = !game.isWon() && !game.isLost();
             if( gameStillGoing )
             {
                 game.guess( letter );
-                render( game );
+                render();
             }
         }
     };
@@ -273,7 +396,7 @@ function listenForInput( game )
         const ENTER = 13;
         let isLetter = event.keyCode >= A && event.keyCode <= Z;
         let newGameButton = document.getElementById("newGameButton");
-        let gameOver = game.isWon() || game.isLost();
+        let gameOver = game ? (game.isWon() || game.isLost()) : false;
 
         if( isLetter )
         {
@@ -290,12 +413,23 @@ function listenForInput( game )
     document.body.addEventListener('click', handleClick );
 }
 
-function render( game )
+function render()
 {
+    if (!game) return;
+
     document.getElementById("word").innerHTML = game.getMaskedWord(); 
     
     document.getElementById("scoreValue").textContent = score;
     document.getElementById("highScoreValue").textContent = highScore;
+    
+    let progress = calculateCategoryProgress();
+    let maxWordsInCategory = getSelectedCategoryData().words.length;
+    let learnedWordsEquivalent = maxWordsInCategory > 0 ? Math.floor(progress.current / 5) : 0;
+
+    let progressElem = document.getElementById("progressValue");
+    if (progressElem) {
+        progressElem.textContent = `${learnedWordsEquivalent} / ${maxWordsInCategory} (${progress.percentage}%)`;
+    }
     
     let guessesContainer = document.getElementById("guesses");
     guessesContainer.innerHTML = "";
@@ -318,12 +452,14 @@ function render( game )
 
     tipBox.textContent = tip;
 
+    // СЕЛЕКТОР КАТЕГОРИИ ВСЕГДА АКТИВЕН
+    if (categorySelect) categorySelect.disabled = false;
+
     if( game.isWon() )
     {
         hangmanImg.src = "img/hangman_win.jpeg";
         tipBox.className = "win";
         newGameButton.disabled = false;
-        if (categorySelect) categorySelect.disabled = false;
         if (hintBtn) hintBtn.disabled = true;
     }
     else if( game.isLost() )
@@ -331,7 +467,6 @@ function render( game )
         hangmanImg.src = "img/hangman" + game.getIncorrectGuesses() + ".jpeg";
         tipBox.className = "loss";
         newGameButton.disabled = false;
-        if (categorySelect) categorySelect.disabled = false;
         if (hintBtn) hintBtn.disabled = true;
     }
     else
@@ -344,7 +479,6 @@ function render( game )
         }
         
         newGameButton.disabled = true;
-        if (categorySelect) categorySelect.disabled = true;
         if (hintBtn) hintBtn.disabled = false;
     }
 }
@@ -353,17 +487,21 @@ function onCategoryChange() {
     let select = document.getElementById("categorySelect");
     if (select) {
         localStorage.setItem('hangman_category', select.value);
-        newGame();
+        newGame(); // Мгновенный перезапуск раунда без перезагрузки страницы
     }
 }
 
 function newGame()
 {
-    history.go(0);
+    // Отменяем активную озвучку при смене раунда
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
+    game = new Game();
+    render();
 }
 
 // Запуск игры
 initCategorySelect();
-let game = new Game();
-render( game );
-listenForInput( game );
+listenForInput();
+newGame();
