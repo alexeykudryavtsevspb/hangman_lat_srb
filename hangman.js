@@ -1,8 +1,8 @@
 let tip = ".";
 
 // Пути к аудио
-let audio_yes = new Audio("audio/yes.mp3");
-let audio_no = new Audio("audio/no.mp3");
+let audio_yes = new Audio("audio/yes.wav");
+let audio_no = new Audio("audio/no.wav");
 let audio_win = new Audio("audio/win.mp3");
 let audio_los = new Audio("audio/los.mp3");
 
