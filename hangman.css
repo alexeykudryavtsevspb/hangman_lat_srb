@@ -32,59 +32,65 @@ main {
   object-fit: cover;
 }
 
-/* Компактный плашка счета и прогресса в левом верхнем углу */
+/* Компактная плашка счета и прогресса в левом верхнем углу */
 #scoreBox {
   position: absolute;
   top: 10px;
   left: 10px;
   background: rgba(254, 243, 199, 0.95);
   border: 2px solid #b45309;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 6px 10px;
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: bold;
   color: #451a03;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  text-align: left;
+  gap: 4px;
   z-index: 10;
+  width: auto;
+  min-width: 110px;
+  max-width: 180px;
+  box-sizing: border-box;
 }
 
 .stats-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   line-height: 1.2;
 }
 
-.stats-row span {
+.stats-item {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  white-space: nowrap;
 }
 
 .stats-divider {
-  color: #d97706;
-  opacity: 0.6;
+  color: #b45309;
+  opacity: 0.5;
 }
 
 .progress-row {
-  color: #047857; /* Темно-зеленый оттенок для прогресса обучения */
   border-top: 1px solid rgba(180, 83, 9, 0.25);
-  padding-top: 3px;
+  padding-top: 4px;
   margin-top: 1px;
+  color: #047857; /* Темно-зеленый оттенок для прогресса */
+  justify-content: flex-start;
 }
 
-/* Исправлено: убираем старый крупный зеленый блок для highScoreValue */
-#highScoreValue, #scoreValue {
+#progressValue, #highScoreValue, #scoreValue {
   display: inline;
   font-size: inherit;
   font-weight: bold;
   color: inherit;
   line-height: inherit;
+  white-space: nowrap;
 }
 
 #word {
@@ -98,6 +104,34 @@ main {
   word-break: normal;
   margin: 10px 0;
   text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+#tipContainer {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.hint-button {
+  background-color: #d4a359;
+  color: #2b1d14;
+  border: none;
+  padding: 8px 16px;
+  font-size: 13pt;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 3px rgba(0,0,0,0.3);
+  transition: background-color 0.2s;
+}
+
+.hint-button:hover {
+  background-color: #ebd185;
+}
+
+.hint-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 #tipBox {
@@ -247,35 +281,14 @@ main {
   color: #a8998c;
 }
 
-#tipContainer {
-  margin: 10px 0;
-  text-align: center;
-}
-
-.hint-button {
-  background-color: #d4a359;
-  color: #2b1d14;
-  border: none;
-  padding: 8px 16px;
-  font-size: 13pt;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 3px rgba(0,0,0,0.3);
-  transition: background-color 0.2s;
-}
-
-.hint-button:hover {
-  background-color: #ebd185;
-}
-
-.hint-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
 @media only screen and (max-width: 480px) {
+  #scoreBox {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    top: 6px;
+    left: 6px;
+  }
+
   #word {
     font-size: 18pt;
     letter-spacing: 4px;
