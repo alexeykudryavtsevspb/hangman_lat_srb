@@ -81,10 +81,19 @@ function renderIncubatorUI(activeWords, catKey) {
 
     if (level >= 5) {
       slot.textContent = '⭐';
-      slot.classList.add('learned');
-    } else if (level > 0) {
+      slot.classList.add('level-5');
+    } else if (level === 4) {
+      slot.textContent = '🌳';
+      slot.classList.add('level-4');
+    } else if (level === 3) {
+      slot.textContent = '🪴';
+      slot.classList.add('level-3');
+    } else if (level === 2) {
+      slot.textContent = '🌿';
+      slot.classList.add('level-2');
+    } else if (level === 1) {
       slot.textContent = '🌱';
-      slot.classList.add('in-progress');
+      slot.classList.add('level-1');
     } else {
       slot.textContent = '⚪';
       slot.classList.add('new');

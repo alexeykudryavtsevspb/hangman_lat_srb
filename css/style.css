@@ -91,19 +91,44 @@ main {
   user-select: none;
 }
 
-.incubator-slot.new {
+/* Базовый слот (Уровень 0) */
+.incubator-slot {
+  transition: all 0.3s ease; /* Плавные переходы при смене уровня */
+}
+
+.incubator-slot.level-0 {
   opacity: 0.4;
   filter: grayscale(100%);
 }
 
-.incubator-slot.in-progress {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 3px #10b981);
+/* Уровень 1: Начало */
+.incubator-slot.level-1 {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 2px #94a3b8);
 }
 
-.incubator-slot.learned {
+/* Уровень 2: Прогресс */
+.incubator-slot.level-2 {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 3px #34d399);
+}
+
+/* Уровень 3: Уверенный рост */
+.incubator-slot.level-3 {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 4px #10b981);
+}
+
+/* Уровень 4: Почти максимум */
+.incubator-slot.level-4 {
   transform: scale(1.2);
-  filter: drop-shadow(0 0 5px #fbbf24);
+  filter: drop-shadow(0 0 5px #059669);
+}
+
+/* Уровень 5: Абсолютный максимум (Звезда) */
+.incubator-slot.level-5 {
+  transform: scale(1.25);
+  filter: drop-shadow(0 0 8px #fbbf24);
   animation: pulseGold 2s infinite ease-in-out;
 }
 
