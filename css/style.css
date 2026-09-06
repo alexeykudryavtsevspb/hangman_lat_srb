@@ -1,4 +1,4 @@
-/* hangman.css */
+/* css/style.css */
 
 body {
   background-color: #2b1d14; /* Уютный тёмно-древесный фон под интерьер кафаны */
@@ -15,12 +15,15 @@ main {
   width: 100%;
 }
 
-/* --- ВЕРХНЯЯ ПАНЕЛЬ (#scoreBox) --- */
-#scoreBox {
+/* --- ВЕРХНЯЯ МИНИ-ПАНЕЛЬ СТАТИСТИКИ (в 1 строку) --- */
+.score-box-mini {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: rgba(254, 243, 199, 0.95);
   border: 2px solid #b45309;
   border-radius: 12px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   font-size: 0.95rem;
   font-weight: bold;
   color: #451a03;
@@ -28,35 +31,19 @@ main {
   margin-bottom: 10px;
   box-sizing: border-box;
   width: 100%;
+  white-space: nowrap;
 }
 
-.score-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  line-height: 1.3;
-}
-
-.score-left, .score-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.score-divider {
-  color: #b45309;
-  opacity: 0.4;
-}
-
-.rank-badge {
+.stat-item {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(180, 83, 9, 0.15);
-  padding: 2px 8px;
-  border-radius: 6px;
-  color: #78350f;
+}
+
+.stat-divider {
+  color: #b45309;
+  opacity: 0.4;
+  font-weight: normal;
 }
 
 /* --- БЛОК ВИСЕЛИЦЫ И ИЗОБРАЖЕНИЯ --- */
@@ -323,7 +310,6 @@ main {
   color: #a8998c;
 }
 
-/* Прогресс по категории внизу */
 #categoryProgressValue {
   margin-top: 8px;
   font-size: 11pt;
@@ -332,11 +318,40 @@ main {
   opacity: 0.9;
 }
 
+/* --- НИЖНИЙ БЛОК-ЛЕГЕНДА (ПОДРОБНОСТИ СТАТИСТИКИ) --- */
+.stats-legend-box {
+  margin: 20px 0 15px 0;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 163, 89, 0.4);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #f5e9da;
+}
+
+.legend-row {
+  margin-bottom: 6px;
+  word-wrap: break-word;
+}
+
+.legend-row:last-child {
+  margin-bottom: 0;
+}
+
+.legend-row b {
+  color: #fce8a6;
+}
+
 /* --- АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ --- */
 @media only screen and (max-width: 480px) {
-  #scoreBox {
-    padding: 6px 10px;
-    font-size: 0.82rem;
+  .score-box-mini {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+
+  .stat-item {
+    gap: 2px;
   }
 
   .incubator-slot {
@@ -362,5 +377,18 @@ main {
     width: 80%;
     font-size: 18px;
     padding: 12px;
+  }
+
+  .stats-legend-box {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+
+  .legend-subtext {
+    display: block;
+    font-size: 11px;
+    color: #d4a359;
+    margin-top: 1px;
+    margin-left: 22px;
   }
 }

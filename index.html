@@ -6,29 +6,23 @@
     <title>Кафана</title>
     <link rel="icon" type="image/png" href="img/favicon-16x16.png">
     <!-- Переименованный CSS -->
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="css/style.css?v=18">
   </head>
   <body>
     <main>
       <!-- 1. Верхняя панель счета и прогресса -->
-      <div id="scoreBox">
-        <div class="score-row">
-          <div class="score-left">
-            <span>🔥 <span id="streakDaysValue">0</span> дн.</span>
-            <span class="score-divider">|</span>
-            <span>🧊 <span id="streakFreezesValue">0/3</span></span>
-          </div>
-          <div class="score-right">
-            <span class="rank-badge">
-              <span id="rankIconValue">🪙</span>
-              <span id="rankTitleValue">Пролазник</span>
-            </span>
-            <span class="score-divider">|</span>
-            <span>🎯 <span id="currentStreakValue">0</span></span>
-            <span class="score-divider">|</span>
-            <span>🏆 <span id="recordStreakValue">0</span></span>
-          </div>
-        </div>
+      <div class="score-box-mini">
+        <span class="stat-item" title="Дневни низ (Daily Streak)">🔥 <span id="streakDaysValue">0</span></span>
+        <span class="stat-divider">|</span>
+        <span class="stat-item" title="Замрзивачи">🧊 <span id="streakFreezesValue">0/3</span></span>
+        <span class="stat-divider">|</span>
+        <span class="stat-item" title="Низ без грешке">
+          <span id="rankIconValue">☕</span> <span id="currentStreakValue">0</span>
+        </span>
+        <span class="stat-divider">|</span>
+        <span class="stat-item" title="Рекордни низ">🏆 <span id="recordStreakValue">0</span></span>
+        <span class="stat-divider">|</span>
+        <span class="stat-item" title="Напредак категорије">🎓 <span id="categoryPercentValue">0%</span></span>
       </div>
 
       <!-- 2. Блок виселицы и изображения -->
@@ -62,23 +56,34 @@
         <div id="categoryContainer">
           <label for="categorySelect">Изаберите категорију:</label>
           <select id="categorySelect" onchange="onCategoryChange();"></select>
-          <div id="categoryProgressValue">🎓 Научено у категорији: 0 / 0 (0%)</div>
         </div>
+      </div>
+
+      <!-- 8. Расширенная легенда статистики -->
+      <div class="stats-legend-box">
+        <div class="legend-row">🔥 <b>Дневни низ:</b> <span id="legendDaysValue">0</span> дн. (одиграјте бар једну игру сваког дана)</div>
+        <div class="legend-row">🧊 <b>Замрзивачи:</b> <span id="legendFreezesValue">0/3</span> (штите дневни низ од прекида, +1 сваке недеље)</div>
+        <div class="legend-row">
+          <span id="legendRankIcon">☕</span> <b>Ранг:</b> <span id="legendRankTitle">Пролазник</span> 
+          (победе без грешке заредом: <span id="legendCurrentStreak">0</span>)
+        </div>
+        <div class="legend-row">🏆 <b>Рекордни низ:</b> <span id="legendRecordStreak">0</span> (максималан број победа без грешке за све време)</div>
+        <div class="legend-row">🎓 <b>Научено у категорији:</b> <span id="legendCategoryProgress">0/0 (0%)</span> (научене речи / укупно речи)</div>
       </div>
     </main>
 
     <!-- 1. Словари из папки js/ -->
-    <script src="js/words_anatomija_1.js?v=17"></script>
-    <script src="js/words_phrases.js?v=17"></script>
-    <script src="js/words_test.js?v=17"></script>
+    <script src="js/words_anatomija_1.js?v=18"></script>
+    <script src="js/words_phrases.js?v=18"></script>
+    <script src="js/words_test.js?v=18"></script>
 
     <!-- 2. Конфигурация -->
-    <script src="js/config.js?v=17"></script>
+    <script src="js/config.js?v=18"></script>
 
     <!-- 3. Модули логики (порядок важен) -->
-    <script src="js/storage.js?v=17"></script>
-    <script src="js/ui.js?v=17"></script>
-    <script src="js/audio.js?v=17"></script>
-    <script src="js/main.js?v=17"></script>
+    <script src="js/storage.js?v=18"></script>
+    <script src="js/ui.js?v=18"></script>
+    <script src="js/audio.js?v=18"></script>
+    <script src="js/main.js?v=18"></script>
   </body>
 </html>

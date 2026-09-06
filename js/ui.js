@@ -1,44 +1,56 @@
 // js/ui.js
 
-/**
- * Определение ранга и иконки на основе серии побед без ошибок
- */
 function getRankInfo(streak = 0) {
-  if (streak >= 25) {
-    return { title: 'Цар', icon: '👑' };
-  }
-  if (streak >= 15) {
-    return { title: 'Богаташ', icon: '💰' };
-  }
-  if (streak >= 8) {
-    return { title: 'Драг гост', icon: '💵' };
-  }
-  if (streak >= 3) {
-    return { title: 'Намерник', icon: '🍔' };
-  }
+  if (streak >= 25) return { title: 'Цар', icon: '👑' };
+  if (streak >= 15) return { title: 'Богаташ', icon: '💰' };
+  if (streak >= 8)  return { title: 'Драг гост', icon: '💵' };
+  if (streak >= 3)  return { title: 'Намерник', icon: '🍔' };
   return { title: 'Пролазник', icon: '☕' };
 }
 
-/**
- * Обновление верхней панели статистики и ранга
- */
-function updateScoreBoxUI(stats) {
+function updateScoreBoxUI(stats, categoryStats = { learned: 0, total: 0 }) {
+  const streakDays = stats.streakDays || 0;
+  const streakFreezes = `${stats.streakFreezes || 0}/3`;
+  const currentStreak = stats.currentStreak || 0;
+  const recordStreak = stats.recordStreak || 0;
+  const rank = getRankInfo(currentStreak);
+
+  // Расчет процента прогресса по категории
+  const learned = categoryStats.learned || 0;
+  const total = categoryStats.total || 0;
+  const percent = total > 0 ? Math.round((learned / total) * 100) : 0;
+
+  // 1. Верхняя мини-панель
   const streakDaysEl = document.getElementById('streakDaysValue');
   const streakFreezesEl = document.getElementById('streakFreezesValue');
   const currentStreakEl = document.getElementById('currentStreakValue');
   const recordStreakEl = document.getElementById('recordStreakValue');
   const rankIconEl = document.getElementById('rankIconValue');
-  const rankTitleEl = document.getElementById('rankTitleValue');
+  const categoryPercentEl = document.getElementById('categoryPercentValue');
 
-  if (streakDaysEl) streakDaysEl.textContent = stats.streakDays || 0;
-  if (streakFreezesEl) streakFreezesEl.textContent = `${stats.streakFreezes || 0}/3`;
-  if (currentStreakEl) currentStreakEl.textContent = stats.currentStreak || 0;
-  if (recordStreakEl) recordStreakEl.textContent = stats.recordStreak || 0;
-
-  const rank = getRankInfo(stats.currentStreak || 0);
-
+  if (streakDaysEl) streakDaysEl.textContent = streakDays;
+  if (streakFreezesEl) streakFreezesEl.textContent = streakFreezes;
+  if (currentStreakEl) currentStreakEl.textContent = currentStreak;
+  if (recordStreakEl) recordStreakEl.textContent = recordStreak;
   if (rankIconEl) rankIconEl.textContent = rank.icon;
-  if (rankTitleEl) rankTitleEl.textContent = rank.title;
+  if (categoryPercentEl) categoryPercentEl.textContent = `${percent}%`;
+
+  // 2. Нижний блок-легенда
+  const legendDaysEl = document.getElementById('legendDaysValue');
+  const legendFreezesEl = document.getElementById('legendFreezesValue');
+  const legendCurrentEl = document.getElementById('legendCurrentStreak');
+  const legendRecordEl = document.getElementById('legendRecordStreak');
+  const legendRankIconEl = document.getElementById('legendRankIcon');
+  const legendRankTitleEl = document.getElementById('legendRankTitle');
+  const legendCategoryProgressEl = document.getElementById('legendCategoryProgress');
+
+  if (legendDaysEl) legendDaysEl.textContent = streakDays;
+  if (legendFreezesEl) legendFreezesEl.textContent = streakFreezes;
+  if (legendCurrentEl) legendCurrentEl.textContent = currentStreak;
+  if (legendRecordEl) legendRecordEl.textContent = recordStreak;
+  if (legendRankIconEl) legendRankIconEl.textContent = rank.icon;
+  if (legendRankTitleEl) legendRankTitleEl.textContent = rank.title;
+  if (legendCategoryProgressEl) legendCategoryProgressEl.textContent = `${learned}/${total} (${percent}%)`;
 }
 
 function renderIncubatorUI(activeWords, progressMap) {
