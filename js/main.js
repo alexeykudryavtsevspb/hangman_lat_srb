@@ -1,20 +1,39 @@
 // js/main.js
 
 let currentCategory = '';
-let currentWordObj = null;
+let currentWordObj = null; // [ "Слово", "Перевод" ]
 let guessedLetters = new Set();
 let mistakes = 0;
 const MAX_MISTAKES = 7;
 
 let stats = getSavedStats();
-let wordProgress = getSavedProgress();
 
-// Инициализация при загрузке страницы
+// Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
   initCategorySelect();
-  updateScoreBoxUI(stats);
+  stats = getSavedStats();
+  refreshStatsUI();
   startNewGame();
 });
+
+function refreshStatsUI() {
+  const categoryData = typeof GAME_CATEGORIES !== 'undefined' ? GAME_CATEGORIES[currentCategory] : null;
+  const categoryWords = categoryData ? categoryData.words : [];
+  
+  // Расчет выученных слов для категории
+  let learnedCount = 0;
+  if (categoryWords.length > 0) {
+    const statsMap = loadCategoryStats(currentCategory);
+    categoryWords.forEach(item => {
+      let wordKey = item[0].toUpperCase();
+      if (statsMap[wordKey] && statsMap[wordKey].level >= 5) {
+        learnedCount++;
+      }
+    });
+  }
+
+  updateScoreBoxUI(stats, { learned: learnedCount, total: categoryWords.length });
+}
 
 function initCategorySelect() {
   const selectEl = document.getElementById('categorySelect');
@@ -28,7 +47,6 @@ function initCategorySelect() {
   
   if (categoryKeys.length === 0) return;
 
-  // Восстанавливаем сохраненную категорию или берем первую
   let savedCategory = localStorage.getItem('hangman_category');
   if (!savedCategory || !GAME_CATEGORIES[savedCategory]) {
     savedCategory = categoryKeys[0];
@@ -66,11 +84,10 @@ function startNewGame() {
     return;
   }
 
-  // Получаем активный пул из 10 слов (Инкубатор) и выбираем взвешенное слово
+  // Получаем активный пул слов (Инкубатор) и выбираем слово
   const activeWords = getActivePool(currentCategory, categoryData.words);
   currentWordObj = selectWeightedWord(activeWords, currentCategory);
 
-  // Алфавит берутся строго из данных текущей категории (allLetters)
   const categoryAlphabet = categoryData.allLetters || [];
 
   // Обновление UI
@@ -82,9 +99,9 @@ function startNewGame() {
   const tipBoxText = currentWordObj[1] || '.';
   updateTipBoxUI(tipBoxText);
 
-  // Обновление инкубатора и прогресса категории
+  // Обновление Инкубатора и легенды
   renderIncubatorUI(activeWords, currentCategory);
-  calcAndRenderCategoryProgress(currentCategory, categoryData.words);
+  refreshStatsUI();
 
   const newGameBtn = document.getElementById('newGameButton');
   if (newGameBtn) newGameBtn.disabled = true;
@@ -100,14 +117,17 @@ function handleLetterGuess(letter) {
 
   const cleanWord = currentWordObj[0].toUpperCase();
   if (cleanWord.includes(letter)) {
+    playYesAudio(); // Звук угаданной буквы
     updateWordDisplay();
     checkWinCondition();
   } else {
+    playNoAudio(); // Звук неверной буквы
     mistakes++;
-    // При любой ошибке сбрасывается текущая серия побед без ошибок
+    
+    // При ошибке сбрасываем серию побед без ошибок
     stats.currentStreak = 0;
     saveStats(stats);
-    updateScoreBoxUI(stats);
+    refreshStatsUI();
 
     updateHangmanImageUI(mistakes);
     checkLossCondition();
@@ -125,14 +145,14 @@ function updateWordDisplay() {
 
   for (let char of cleanWord) {
     let charCode = char.charCodeAt(0);
-    if (charCode >= 65 && charCode <= 90 || charCode > 127) { // Обычные и кириллические/специальные буквы
+    if ((charCode >= 65 && charCode <= 90) || charCode > 127) {
       if (guessedLetters.has(char)) {
         display += char;
       } else {
         display += '_';
       }
     } else {
-      display += char; // Пробелы, дефисы и знаки препинания оставляем
+      display += char;
     }
   }
 
@@ -151,21 +171,22 @@ function checkWinCondition() {
     updateWordDisplay();
     updateTipBoxUI(currentWordObj[1] || 'Победа!', 'win');
     
-    // Обновляем прогресс слова
+    // Прогресс по слову
     updateWordProgress(currentCategory, currentWordObj[0], mistakes, false);
     
-    // Регистрируем активность дня для Daily Streak
+    // Активность для Daily Streak
     registerDailyActivity();
 
-    // Обновляем стрики побед
+    // Обновляем статистику
     stats = getSavedStats();
     stats.currentStreak++;
     if (stats.currentStreak > stats.recordStreak) {
       stats.recordStreak = stats.currentStreak;
     }
     saveStats(stats);
-    updateScoreBoxUI(stats);
+    refreshStatsUI();
 
+    // Сначала произносим слово, затем воспроизводим победный трек win.mp3
     speakWord(currentWordObj[0], () => playWinAudio());
     finishGame();
   }
@@ -176,10 +197,10 @@ function checkLossCondition() {
     renderWordUI(currentWordObj[0].toUpperCase());
     updateTipBoxUI(`Пораз! Тачно слово: ${currentWordObj[0]}`, 'loss');
     
-    // Сбрасываем прогресс слова при поражении
     updateWordProgress(currentCategory, currentWordObj[0], mistakes, false);
 
     finishGame();
+    // Сначала произносим слово, затем воспроизводим звук поражения los.mp3
     speakWord(currentWordObj[0], () => playLossAudio());
   }
 }
@@ -195,7 +216,7 @@ function finishGame() {
   if (categoryData) {
     const activeWords = getActivePool(currentCategory, categoryData.words);
     renderIncubatorUI(activeWords, currentCategory);
-    calcAndRenderCategoryProgress(currentCategory, categoryData.words);
+    refreshStatsUI();
   }
 }
 
@@ -205,21 +226,22 @@ function useHint() {
   }
 }
 
-function calcAndRenderCategoryProgress(catKey, categoryWords) {
-  const statsMap = loadCategoryStats(catKey);
-  let learnedCount = 0;
+document.addEventListener('keydown', (event) => {
+  // Игнорируем сочетания клавиш вроде Ctrl+R, Alt+Tab и т.д.
+  if (event.ctrlKey || event.altKey || event.metaKey) return;
 
-  categoryWords.forEach(item => {
-    let wordKey = item[0].toUpperCase();
-    if (statsMap[wordKey] && statsMap[wordKey].level === 5) {
-      learnedCount++;
-    }
-  });
+  const pressedKey = event.key.toUpperCase();
+  const categoryAlphabet = GAME_CATEGORIES[currentCategory]?.allLetters || [];
 
-  updateCategoryProgressUI(learnedCount, categoryWords.length);
-}
+  // Проверяем:
+  // 1. Есть ли буква в алфавите текущей категории
+  // 2. Не нажималась ли она уже ранее
+  if (categoryAlphabet.includes(pressedKey) && !guessedLetters.has(pressedKey)) {
+    handleLetterGuess(pressedKey);
+  }
+});
 
-// Глобальные вызовы для HTML
+// Глобальное выравнивание функций для HTML
 window.newGame = startNewGame;
 window.onCategoryChange = onCategoryChange;
 window.useHint = useHint;
