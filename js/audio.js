@@ -1,11 +1,24 @@
 // js/audio.js
 
 const audioCache = {};
+let soundEffectsEnabled = true; // По умолчанию звуковые эффекты включены
+
+/**
+ * Переключатель звуковых эффектов
+ */
+function setSoundEffectsEnabled(enabled) {
+  soundEffectsEnabled = enabled;
+  if (!enabled) {
+    stopLongAudio();
+  }
+}
 
 /**
  * Универсальная функция проигрывания звуковых файлов из папки audio/
  */
 function playAudio(filename) {
+  if (!soundEffectsEnabled) return;
+
   if (!audioCache[filename]) {
     audioCache[filename] = new Audio(`audio/${filename}`);
   }
@@ -13,6 +26,18 @@ function playAudio(filename) {
   const sound = audioCache[filename];
   sound.currentTime = 0;
   sound.play().catch(err => console.warn(`Не удалось проиграть звук ${filename}:`, err));
+}
+
+/**
+ * Мгновенно останавливает воспроизведение всех длинных аудиофайлов
+ */
+function stopLongAudio() {
+  ['win.mp3', 'fajront.mp3', 'los.mp3'].forEach((filename) => {
+    if (audioCache[filename]) {
+      audioCache[filename].pause();
+      audioCache[filename].currentTime = 0;
+    }
+  });
 }
 
 // Звуковые эффекты

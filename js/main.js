@@ -8,9 +8,9 @@ const MAX_MISTAKES = 7;
 
 let stats = getSavedStats();
 
-// Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
   initCategorySelect();
+  initSettingsUI(); // Инициализация настроек
   stats = getSavedStats();
   refreshStatsUI();
   listenForKeyboardInput();
@@ -75,6 +75,8 @@ function onCategoryChange() {
 }
 
 function startNewGame() {
+  stopLongAudio();
+
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
@@ -259,6 +261,24 @@ function listenForKeyboardInput() {
         handleLetterGuess(pressedKey);
       }
     }
+  });
+}
+
+function initSettingsUI() {
+  const soundCheckbox = document.getElementById('soundEffectsToggle');
+  if (!soundCheckbox) return;
+
+  // Загружаем сохраненный выбор пользователя
+  const savedSoundPref = localStorage.getItem('hangman_sound_effects');
+  const isEnabled = savedSoundPref !== null ? savedSoundPref === 'true' : true;
+
+  soundCheckbox.checked = isEnabled;
+  setSoundEffectsEnabled(isEnabled);
+
+  soundCheckbox.addEventListener('change', (e) => {
+    const enabled = e.target.checked;
+    setSoundEffectsEnabled(enabled);
+    localStorage.setItem('hangman_sound_effects', enabled);
   });
 }
 
