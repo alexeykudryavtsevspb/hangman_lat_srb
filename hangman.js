@@ -6,8 +6,9 @@ let audio_no = new Audio("audio/no.wav");
 let audio_win = new Audio("audio/win.mp3");
 let audio_los = new Audio("audio/fajront.mp3");
 
-let score = parseInt(localStorage.getItem('hangman_score')) || 0;
-let highScore = parseInt(localStorage.getItem('hangman_high_score')) || 0;
+// Счётчик серии и рекорда побед без ошибок
+let currentStreak = parseInt(localStorage.getItem('hangman_current_streak')) || 0;
+let recordStreak = parseInt(localStorage.getItem('hangman_record_streak')) || 0;
 
 let hintUsed = false;
 let game = null; // Глобальный экземпляр текущей игры
@@ -20,7 +21,97 @@ if ('speechSynthesis' in window) {
     };
 }
 
-// --- СИСТЕМА ИНТЕРВАЛЬНОГО ПОВТОРЕНИЯ (SRS) ---
+// --- СИСТЕМА СТРИКОВ И ЗАМОРОЗОК (DAILY STREAK) ---
+
+function getStreakData() {
+    let defaultData = {
+        days: 0,
+        freezes: 0,
+        lastPlayDate: null,
+        daysForNextFreeze: 0,
+        dailyNormMet: false
+    };
+    return JSON.parse(localStorage.getItem('hangman_daily_streak_data')) || defaultData;
+}
+
+function saveStreakData(data) {
+    localStorage.setItem('hangman_daily_streak_data', JSON.stringify(data));
+}
+
+function checkDailyStreak() {
+    let streakData = getStreakData();
+    let today = new Date().toDateString();
+
+    if (!streakData.lastPlayDate) {
+        return streakData;
+    }
+
+    if (streakData.lastPlayDate === today) {
+        return streakData;
+    }
+
+    let lastDate = new Date(streakData.lastPlayDate);
+    let currDate = new Date(today);
+    let diffTime = currDate - lastDate;
+    let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+        // Прошёл ровно 1 день — сбрасываем флаг дневной нормы
+        streakData.dailyNormMet = false;
+    } else if (diffDays > 1) {
+        // Пропущено больше 1 дня
+        let missedDays = diffDays - 1;
+        
+        while (missedDays > 0 && streakData.freezes > 0) {
+            streakData.freezes--;
+            missedDays--;
+        }
+
+        if (missedDays > 0) {
+            // Заморозок не хватило — стрик сбрасывается
+            streakData.days = 0;
+            streakData.daysForNextFreeze = 0;
+        }
+        streakData.dailyNormMet = false;
+    }
+
+    saveStreakData(streakData);
+    return streakData;
+}
+
+function registerDailyActivity() {
+    let streakData = checkDailyStreak();
+    let today = new Date().toDateString();
+
+    if (!streakData.dailyNormMet) {
+        streakData.dailyNormMet = true;
+        streakData.days += 1;
+        streakData.daysForNextFreeze += 1;
+
+        // За каждые 7 дней стрика получаем +1 заморозку (максимум 3)
+        if (streakData.daysForNextFreeze >= 7) {
+            streakData.daysForNextFreeze = 0;
+            if (streakData.freezes < 3) {
+                streakData.freezes += 1;
+            }
+        }
+    }
+
+    streakData.lastPlayDate = today;
+    saveStreakData(streakData);
+}
+
+// --- СИСТЕМА РАНГОВ ---
+
+function getRankInfo(streak) {
+    if (streak >= 50) return { title: "Газда", icon: "🏦" };
+    if (streak >= 30) return { title: "Богаташ", icon: "🧰" };
+    if (streak >= 15) return { title: "Драг гост", icon: "💵" };
+    if (streak >= 5)  return { title: "Намерник", icon: "💰" };
+    return { title: "Пролазник", icon: "🪙" };
+}
+
+// --- СИСТЕМА ИНТЕРВАЛЬНОГО ПОВТОРЕНИЯ И АКТИВНОГО ПУЛА (10 СЛОВ) ---
 
 function getCategoryStatsKey() {
     let selectedCategory = localStorage.getItem('hangman_category') || Object.keys(GAME_CATEGORIES)[0];
@@ -37,12 +128,67 @@ function saveCategoryStats(stats) {
     localStorage.setItem(key, JSON.stringify(stats));
 }
 
-// Расчет текущего слова по алгоритму рулетки (Weighted Random Choice)
-function selectWeightedWord(words) {
+function getActivePoolKey() {
+    let selectedCategory = localStorage.getItem('hangman_category') || Object.keys(GAME_CATEGORIES)[0];
+    return 'hangman_active_pool_' + selectedCategory;
+}
+
+// Загрузка и обновление активной 10-ки слов
+function getActivePool() {
+    let categoryData = getSelectedCategoryData();
+    let allWords = categoryData.words;
+    let poolKey = getActivePoolKey();
+    let stats = loadCategoryStats();
+    
+    let poolData = JSON.parse(localStorage.getItem(poolKey)) || { words: [], lastCheckDate: null };
+    let today = new Date().toDateString();
+
+    // Если наступил новый день — освобождаем слоты с выученными словами (уровень 5)
+    if (poolData.lastCheckDate !== today) {
+        poolData.words = poolData.words.filter(wordText => {
+            let wordKey = wordText.toUpperCase();
+            let level = stats[wordKey] ? stats[wordKey].level : 0;
+            return level < 5; // Выученные слова уходят в архив
+        });
+        poolData.lastCheckDate = today;
+    }
+
+    // Если в активном пуле меньше 10 слов, добираем новые из категории
+    if (poolData.words.length < 10) {
+        let activeSet = new Set(poolData.words.map(w => w.toUpperCase()));
+        
+        let candidates = allWords.filter(item => {
+            let wordKey = item[0].toUpperCase();
+            let level = stats[wordKey] ? stats[wordKey].level : 0;
+            return !activeSet.has(wordKey) && level < 5;
+        });
+
+        // Если неизученных слов не осталось, берем любые не вошедшие в пул
+        if (candidates.length === 0) {
+            candidates = allWords.filter(item => !activeSet.has(item[0].toUpperCase()));
+        }
+
+        while (poolData.words.length < 10 && candidates.length > 0) {
+            let randomIndex = Math.floor(Math.random() * candidates.length);
+            let chosenWord = candidates.splice(randomIndex, 1)[0];
+            poolData.words.push(chosenWord[0]);
+        }
+    }
+
+    localStorage.setItem(poolKey, JSON.stringify(poolData));
+    
+    // Возвращаем полные объекты слов для текущего пула
+    return allWords.filter(item => poolData.words.map(w => w.toUpperCase()).includes(item[0].toUpperCase()));
+}
+
+// Выбор слова по weighted random только из активной 10-ки
+function selectWeightedWord(activeWords) {
     let stats = loadCategoryStats();
     let now = Date.now();
+
+    if (activeWords.length === 0) return getSelectedCategoryData().words[0];
     
-    let weights = words.map(item => {
+    let weights = activeWords.map(item => {
         let wordKey = item[0].toUpperCase();
         let wordData = stats[wordKey] || { level: 0, totalErrors: 0, lastSeen: 0 };
         
@@ -50,14 +196,10 @@ function selectWeightedWord(words) {
         let totalErrors = wordData.totalErrors || 0;
         let lastSeen = wordData.lastSeen || 0;
         
-        // 1. Базовый вес по уровню (0 уровень = максимальный приоритет)
         let baseWeights = [100, 40, 15, 5, 2, 1];
         let baseWeight = baseWeights[level] || 1;
-        
-        // 2. Фактор ошибок (+20% веса за каждую историческую ошибку)
         let errorFactor = 1 + (totalErrors * 0.2);
         
-        // 3. Фактор времени (Интервалы: L0=0д, L1=1д, L2=3д, L3=7д, L4=14д, L5=30д)
         let intervals = [0, 1, 3, 7, 14, 30];
         let targetIntervalDays = intervals[level] || 30;
         
@@ -73,16 +215,16 @@ function selectWeightedWord(words) {
     let totalWeight = weights.reduce((a, b) => a + b, 0);
     let randomNum = Math.random() * totalWeight;
     
-    for (let i = 0; i < words.length; i++) {
+    for (let i = 0; i < activeWords.length; i++) {
         randomNum -= weights[i];
         if (randomNum <= 0) {
-            return words[i];
+            return activeWords[i];
         }
     }
-    return words[0];
+    return activeWords[0];
 }
 
-// Обновление прогресса слова по итогам раунда
+// Обновление прогресса слова
 function updateWordProgress(wordText, mistakes, usedHint) {
     let stats = loadCategoryStats();
     let wordKey = wordText.toUpperCase();
@@ -90,17 +232,16 @@ function updateWordProgress(wordText, mistakes, usedHint) {
     
     let currentLevel = wordData.level || 0;
     let totalErrors = wordData.totalErrors || 0;
-    
     totalErrors += mistakes;
     
     let newLevel = currentLevel;
     
     if (mistakes >= 3) {
-        newLevel = 0; // При частых ошибках/проиграше сбрасываем уровень
+        newLevel = 0;
     } else if (usedHint) {
-        newLevel = Math.max(0, currentLevel - 1); // Подсказка снижает уровень на 1
+        newLevel = Math.max(0, currentLevel - 1);
     } else if (mistakes === 0) {
-        newLevel = Math.min(5, currentLevel + 1); // Идеальное решение поднимает уровень
+        newLevel = Math.min(5, currentLevel + 1);
     }
     
     stats[wordKey] = {
@@ -112,28 +253,27 @@ function updateWordProgress(wordText, mistakes, usedHint) {
     saveCategoryStats(stats);
 }
 
-// Расчет общего процента изученности категории
+// Расчет категории (для нижнего индикатора)
 function calculateCategoryProgress() {
     let categoryData = getSelectedCategoryData();
     let words = categoryData.words;
     let stats = loadCategoryStats();
     
-    let currentPoints = 0;
-    let maxPoints = words.length * 5; // Максимальный уровень каждого слова = 5
-    
+    let learnedCount = 0;
+    let totalWords = words.length;
+
     words.forEach(item => {
         let wordKey = item[0].toUpperCase();
-        if (stats[wordKey] && stats[wordKey].level) {
-            currentPoints += stats[wordKey].level;
+        if (stats[wordKey] && stats[wordKey].level === 5) {
+            learnedCount++;
         }
     });
-    
-    let rawPercentage = maxPoints > 0 ? (currentPoints / maxPoints) * 100 : 0;
-    let percentage = Number(rawPercentage.toFixed(1));
-    
+
+    let percentage = totalWords > 0 ? ((learnedCount / totalWords) * 100).toFixed(1) : 0;
+
     return {
-        current: currentPoints,
-        max: maxPoints,
+        learned: learnedCount,
+        total: totalWords,
         percentage: percentage
     };
 }
@@ -226,11 +366,7 @@ function useHint() {
     }
 
     if (!hintUsed) {
-        score = Math.max(0, score - 1);
-        localStorage.setItem('hangman_score', score);
-        document.getElementById("scoreValue").textContent = score;
         hintUsed = true;
-        
         if (hintBtn) {
             hintBtn.textContent = "🔊 Слушај поново";
         }
@@ -242,10 +378,9 @@ function useHint() {
 function Game()
 {
     hintUsed = false;
-    let categoryData = getSelectedCategoryData();
-    let currentWords = categoryData.words;
+    let activeWords = getActivePool();
+    let selectedItem = selectWeightedWord(activeWords);
     
-    let selectedItem = selectWeightedWord(currentWords);
     let word = selectedItem[0];
     tip = selectedItem[1];
     word = word.toUpperCase();
@@ -254,19 +389,18 @@ function Game()
     let maskedWord = "";
     let incorrectGuesses = 0;
     
+    const categoryData = getSelectedCategoryData();
     const allLetters = categoryData.allLetters;
     let won = false;
     let lost = false;
-    let scoreUpdated = false;
+    let roundProcessed = false;
     const maxGuesses = 7;
 
     for ( let i = 0; i < word.length; i++ )
     {
         let nextCharacter = word.charAt(i);
         let charCode = nextCharacter.charCodeAt(0);
-        let A = 65;
-        let Z = 90;
-        if( A <= charCode && charCode <= Z )
+        if( 65 <= charCode && charCode <= 90 )
         {
             nextCharacter = "_";
         }
@@ -299,16 +433,17 @@ function Game()
                 
                 if(won) {
                     maskedWord = word;
-                    if(!scoreUpdated) {
-                        score += 1;
-                        if (score > highScore) {
-                            highScore = score;
-                            localStorage.setItem('hangman_high_score', highScore);
+                    if(!roundProcessed) {
+                        currentStreak += 1;
+                        if (currentStreak > recordStreak) {
+                            recordStreak = currentStreak;
+                            localStorage.setItem('hangman_record_streak', recordStreak);
                         }
-                        localStorage.setItem('hangman_score', score);
+                        localStorage.setItem('hangman_current_streak', currentStreak);
                         
                         updateWordProgress(word, incorrectGuesses, hintUsed);
-                        scoreUpdated = true;
+                        registerDailyActivity();
+                        roundProcessed = true;
                     }
                     speakWord(word, function() {
                         audio_win.play().catch(() => {});
@@ -327,16 +462,18 @@ function Game()
     let handleIncorrectGuess = function()
     {
         incorrectGuesses++;
+        
+        // Любая ошибка сбрасывает текущую серию побед
+        currentStreak = 0;
+        localStorage.setItem('hangman_current_streak', 0);
+
         lost = incorrectGuesses >= maxGuesses;
         if( lost )
         {
             maskedWord = word;
-            if(!scoreUpdated) {
-                score = Math.max(0, score - 1);
-                localStorage.setItem('hangman_score', score);
-                
+            if(!roundProcessed) {
                 updateWordProgress(word, incorrectGuesses, hintUsed);
-                scoreUpdated = true;
+                roundProcessed = true;
             }
             speakWord(word, function() {
                 audio_los.play().catch(() => {});
@@ -391,10 +528,7 @@ function listenForInput()
     let handleKeyPress = function( event )
     {
         let letter = null;
-        const A = 65;
-        const Z = 90;
-        const ENTER = 13;
-        let isLetter = event.keyCode >= A && event.keyCode <= Z;
+        let isLetter = event.keyCode >= 65 && event.keyCode <= 90;
         let newGameButton = document.getElementById("newGameButton");
         let gameOver = game ? (game.isWon() || game.isLost()) : false;
 
@@ -402,7 +536,7 @@ function listenForInput()
         {
             letter = String.fromCharCode( event.keyCode );
         }
-        else if( event.keyCode === ENTER && gameOver )
+        else if( event.keyCode === 13 && gameOver )
         {
             newGameButton.click();
         }
@@ -417,33 +551,74 @@ function render()
 {
     if (!game) return;
 
+    // 1. Отображение зашифрованного слова
     document.getElementById("word").innerHTML = game.getMaskedWord(); 
     
-    document.getElementById("scoreValue").textContent = score;
-    document.getElementById("highScoreValue").textContent = highScore;
-    
-    let progress = calculateCategoryProgress();
-    let maxWordsInCategory = getSelectedCategoryData().words.length;
-    let learnedWordsEquivalent = maxWordsInCategory > 0 ? Math.floor(progress.current / 5) : 0;
+    // 2. Рендер верхней панели (ScoreBox)
+    let streakData = checkDailyStreak();
+    let rankInfo = getRankInfo(currentStreak);
 
-    let progressElem = document.getElementById("progressValue");
-    if (progressElem) {
-        progressElem.textContent = `${learnedWordsEquivalent} / ${maxWordsInCategory} (${progress.percentage}%)`;
+    let streakDaysElem = document.getElementById("streakDaysValue");
+    let streakFreezesElem = document.getElementById("streakFreezesValue");
+    let rankTitleElem = document.getElementById("rankTitleValue");
+    let rankIconElem = document.getElementById("rankIconValue");
+    let currentStreakElem = document.getElementById("currentStreakValue");
+    let recordStreakElem = document.getElementById("recordStreakValue");
+
+    if (streakDaysElem) streakDaysElem.textContent = streakData.days;
+    if (streakFreezesElem) streakFreezesElem.textContent = `${streakData.freezes}/3`;
+    if (rankTitleElem) rankTitleElem.textContent = rankInfo.title;
+    if (rankIconElem) rankIconElem.textContent = rankInfo.icon;
+    if (currentStreakElem) currentStreakElem.textContent = currentStreak;
+    if (recordStreakElem) recordStreakElem.textContent = recordStreak;
+
+    // 3. Рендер Инкубатора (10 активных карточек)
+    let incubatorBox = document.getElementById("incubatorBox");
+    if (incubatorBox) {
+        incubatorBox.innerHTML = "";
+        let activeWords = getActivePool();
+        let stats = loadCategoryStats();
+
+        activeWords.forEach(item => {
+            let wordKey = item[0].toUpperCase();
+            let level = stats[wordKey] ? stats[wordKey].level : 0;
+            
+            let slot = document.createElement("span");
+            slot.className = "incubator-slot";
+
+            if (level === 5) {
+                slot.textContent = "⭐";
+                slot.classList.add("learned");
+            } else if (level > 0) {
+                slot.textContent = "🌱";
+                slot.classList.add("in-progress");
+            } else {
+                slot.textContent = "⚪";
+                slot.classList.add("new");
+            }
+            incubatorBox.appendChild(slot);
+        });
     }
-    
+
+    // 4. Нижний индикатор прогресса категории
+    let categoryProgress = calculateCategoryProgress();
+    let categoryProgressElem = document.getElementById("categoryProgressValue");
+    if (categoryProgressElem) {
+        categoryProgressElem.textContent = `🎓 Научено у категорији: ${categoryProgress.learned} / ${categoryProgress.total} (${categoryProgress.percentage}%)`;
+    }
+
+    // 5. Рендер буквенной клавиатуры
     let guessesContainer = document.getElementById("guesses");
     guessesContainer.innerHTML = "";
-    
     let guessedLetters = game.getGuessedLetters();
     
     game.getAllLetters().forEach( function(letter) {
         let isGuessed = guessedLetters.includes(letter);
         let disabledClass = isGuessed ? " disabled" : "";
-        
-        let innerHtml = "<span class='guess" + disabledClass + "'>" + letter + "</span>";
-        guessesContainer.innerHTML += innerHtml;
+        guessesContainer.innerHTML += "<span class='guess" + disabledClass + "'>" + letter + "</span>";
     });
     
+    // 6. Подсказки и состояние картинок
     let tipBox = document.getElementById('tipBox');
     let hintBtn = document.getElementById("hintButton");
     let newGameButton = document.getElementById("newGameButton");
@@ -451,8 +626,6 @@ function render()
     let hangmanImg = document.getElementById("hangmanImage");
 
     tipBox.textContent = tip;
-
-    // СЕЛЕКТОР КАТЕГОРИИ ВСЕГДА АКТИВЕН
     if (categorySelect) categorySelect.disabled = false;
 
     if( game.isWon() )
@@ -473,11 +646,7 @@ function render()
     {
         hangmanImg.src = "img/hangman" + game.getIncorrectGuesses() + ".jpeg";
         tipBox.className = "";
-        
-        if (!hintUsed) {
-            if (hintBtn) hintBtn.textContent = "🔊 Слушај фрау (-1 бод)";
-        }
-        
+        if (!hintUsed && hintBtn) hintBtn.textContent = "🔊 Слушај фрау";
         newGameButton.disabled = true;
         if (hintBtn) hintBtn.disabled = false;
     }
@@ -487,13 +656,12 @@ function onCategoryChange() {
     let select = document.getElementById("categorySelect");
     if (select) {
         localStorage.setItem('hangman_category', select.value);
-        newGame(); // Мгновенный перезапуск раунда без перезагрузки страницы
+        newGame();
     }
 }
 
 function newGame()
 {
-    // Отменяем активную озвучку при смене раунда
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
     }

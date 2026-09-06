@@ -1,3 +1,5 @@
+/* hangman.css */
+
 body {
   background-color: #2b1d14; /* Уютный тёмно-древесный фон под интерьер кафаны */
   color: #f5e9da;
@@ -13,10 +15,54 @@ main {
   width: 100%;
 }
 
+/* --- ВЕРХНЯЯ ПАНЕЛЬ (#scoreBox) --- */
+#scoreBox {
+  background: rgba(254, 243, 199, 0.95);
+  border: 2px solid #b45309;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #451a03;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  line-height: 1.3;
+}
+
+.score-left, .score-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-divider {
+  color: #b45309;
+  opacity: 0.4;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(180, 83, 9, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: #78350f;
+}
+
+/* --- БЛОК ВИСЕЛИЦЫ И ИЗОБРАЖЕНИЯ --- */
 #gallows {
   position: relative;
   text-align: center;
-  margin-top: 5px;
   margin-bottom: 10px;
   min-height: 200px;
 }
@@ -30,69 +76,56 @@ main {
   margin: 0 auto;
   border-radius: 12px;
   object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
-/* Компактная плашка счета и прогресса в левом верхнем углу */
-#scoreBox {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(254, 243, 199, 0.95);
-  border: 2px solid #b45309;
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #451a03;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+/* --- ИНКУБАТОР (10 АКТИВНЫХ СЛОВ) --- */
+#incubatorContainer {
+  margin: 10px 0 15px 0;
+  text-align: center;
+}
+
+#incubatorBox {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 10;
-  width: auto;
-  min-width: 110px;
-  max-width: 180px;
-  box-sizing: border-box;
-}
-
-.stats-row {
-  display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  line-height: 1.2;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 163, 89, 0.3);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
-.stats-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  white-space: nowrap;
+.incubator-slot {
+  font-size: 1.3rem;
+  line-height: 1;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  user-select: none;
 }
 
-.stats-divider {
-  color: #b45309;
-  opacity: 0.5;
+.incubator-slot.new {
+  opacity: 0.4;
+  filter: grayscale(100%);
 }
 
-.progress-row {
-  border-top: 1px solid rgba(180, 83, 9, 0.25);
-  padding-top: 4px;
-  margin-top: 1px;
-  color: #047857; /* Темно-зеленый оттенок для прогресса */
-  justify-content: flex-start;
+.incubator-slot.in-progress {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 3px #10b981);
 }
 
-#progressValue, #highScoreValue, #scoreValue {
-  display: inline;
-  font-size: inherit;
-  font-weight: bold;
-  color: inherit;
-  line-height: inherit;
-  white-space: nowrap;
+.incubator-slot.learned {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 5px #fbbf24);
+  animation: pulseGold 2s infinite ease-in-out;
 }
 
+@keyframes pulseGold {
+  0%, 100% { transform: scale(1.2); }
+  50% { transform: scale(1.35); }
+}
+
+/* --- ЗАГАДАННОЕ СЛОВО --- */
 #word {
   letter-spacing: 6px;
   text-align: center;
@@ -102,10 +135,11 @@ main {
   font-family: "Courier New", Courier, monospace;
   overflow-wrap: break-word;
   word-break: normal;
-  margin: 10px 0;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  margin: 12px 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
+/* --- ПОДСКАЗКА И ОЗВУЧКА --- */
 #tipContainer {
   margin: 10px 0;
   text-align: center;
@@ -121,11 +155,15 @@ main {
   border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 3px rgba(0,0,0,0.3);
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .hint-button:hover {
   background-color: #ebd185;
+}
+
+.hint-button:active {
+  transform: translateY(2px);
 }
 
 .hint-button:disabled {
@@ -165,6 +203,7 @@ main {
   border-color: #bd2130 !important;
 }
 
+/* --- КЛАВИАТУРА --- */
 #guesses {
   text-align: center;
   font-size: 16pt;
@@ -192,6 +231,7 @@ main {
   user-select: none;
   min-width: 20px;
   font-size: 18pt;
+  transition: background-color 0.15s;
 }
 
 .guess:hover {
@@ -207,6 +247,7 @@ main {
   pointer-events: none;
 }
 
+/* --- ЭЛЕМЕНТЫ УПРАВЛЕНИЯ И КАТЕГОРИИ --- */
 #controls {
   text-align: center;
   margin: 15px 0 10px 0;
@@ -227,6 +268,7 @@ main {
   border-radius: 12px;
   box-shadow: 0 5px #8c6d3b;
   touch-action: manipulation;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .button:hover {
@@ -281,12 +323,29 @@ main {
   color: #a8998c;
 }
 
+/* Прогресс по категории внизу */
+#categoryProgressValue {
+  margin-top: 8px;
+  font-size: 11pt;
+  font-weight: bold;
+  color: #fce8a6;
+  opacity: 0.9;
+}
+
+/* --- АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ --- */
 @media only screen and (max-width: 480px) {
   #scoreBox {
-    padding: 4px 8px;
-    font-size: 0.8rem;
-    top: 6px;
-    left: 6px;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+  }
+
+  .incubator-slot {
+    font-size: 1.1rem;
+  }
+
+  #incubatorBox {
+    gap: 4px;
+    padding: 8px 6px;
   }
 
   #word {
