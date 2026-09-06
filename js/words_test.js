@@ -1,3 +1,5 @@
 let words_test = [
-	["Aditus", "ulaz"]
+	["Aditus", "ulaz"],
+	["ala", "krilo"],
+	["apex", "vrh"]
 ];

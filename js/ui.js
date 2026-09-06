@@ -53,27 +53,44 @@ function updateScoreBoxUI(stats, categoryStats = { learned: 0, total: 0 }) {
   if (legendCategoryProgressEl) legendCategoryProgressEl.textContent = `${learned}/${total} (${percent}%)`;
 }
 
-function renderIncubatorUI(activeWords, progressMap) {
+function renderIncubatorUI(activeWords, catKey) {
   const incubatorBox = document.getElementById('incubatorBox');
   if (!incubatorBox) return;
 
   incubatorBox.innerHTML = '';
-  activeWords.forEach((wordObj) => {
+  if (!activeWords || activeWords.length === 0) return;
+
+  // Загружаем статистику категории
+  const rawStatsMap = typeof loadCategoryStats === 'function' ? loadCategoryStats(catKey) : {};
+  
+  // Нормализуем ключи к UPPERCASE для надежности
+  const statsMap = {};
+  Object.keys(rawStatsMap).forEach(key => {
+    statsMap[key.toUpperCase()] = rawStatsMap[key];
+  });
+
+  activeWords.forEach((wordItem) => {
+    const wordText = Array.isArray(wordItem) ? wordItem[0] : wordItem;
+    const wordKey = wordText.toUpperCase();
+    
+    const wordData = statsMap[wordKey] || { level: 0 };
+    const level = wordData.level || 0;
+
     const slot = document.createElement('span');
     slot.className = 'incubator-slot';
-    
-    const status = progressMap[wordObj.word] || 'new';
-    slot.classList.add(status);
 
-    if (status === 'learned') {
+    if (level >= 5) {
       slot.textContent = '⭐';
-    } else if (status === 'in-progress') {
+      slot.classList.add('learned');
+    } else if (level > 0) {
       slot.textContent = '🌱';
+      slot.classList.add('in-progress');
     } else {
       slot.textContent = '⚪';
+      slot.classList.add('new');
     }
-    
-    slot.title = wordObj.word;
+
+    slot.title = `${wordText} (Уровень: ${level}/5)`;
     incubatorBox.appendChild(slot);
   });
 }
