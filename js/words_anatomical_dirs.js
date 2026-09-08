@@ -5,7 +5,7 @@ const words_anatomical_dirs = [
     ["Ventalis", "трбушњи, предњи"],
     ["Dorsalis", "леђи, задњи"],
     ["Dexter", "десни"],
-    ["Sinister", "леви "],
+    ["Sinister", "леви"],
     ["Sagitalis", "уздужни "],
     ["meditalis", "унутрашњи, ка унутра"],
     ["Leteralis", "спољашњи, ка споља"],

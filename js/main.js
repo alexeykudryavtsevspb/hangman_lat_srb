@@ -189,6 +189,7 @@ function checkWinCondition() {
     updateWordDisplay();
     updateTipBoxUI(currentWordObj[1] || 'Победа!', 'win');
     
+    // Обновляем прогресс слова (если ошибок 0 -> +1 уровень, если были ошибки -> уровень не меняем)
     updateWordProgress(currentCategory, currentWordObj[0], mistakes, false);
 
     stats = getSavedStats();
@@ -209,7 +210,14 @@ function checkLossCondition() {
     renderWordUI(currentWordObj[0].toUpperCase());
     updateTipBoxUI(`Пораз! Тачно слово: ${currentWordObj[0]}`, 'loss');
     
+    // Проигрыш раунда (сброс уровня слова в 0)
     updateWordProgress(currentCategory, currentWordObj[0], mistakes, false);
+
+    // Сброс серии побед при проигрыше
+    stats = getSavedStats();
+    stats.currentStreak = 0;
+    saveStats(stats);
+    refreshStatsUI();
 
     finishGame(false);
     speakWord(currentWordObj[0], () => playLossAudio());
@@ -239,11 +247,30 @@ function finishGame(isWon) {
 }
 
 function useHint() {
-  if (currentWordObj && currentWordObj[0]) {
-    speakWord(currentWordObj[0]);
-    const hintBtn = document.getElementById("hintButton");
-    if (hintBtn) hintBtn.textContent = "🔊 Слушај поново";
-  }
+  if (!currentWordObj || !currentWordObj[0]) return;
+
+  // 1. Озвучиваем слово
+  speakWord(currentWordObj[0]);
+
+  // 2. Сбрасываем текущую серию правильных ответов
+  stats = getSavedStats();
+  stats.currentStreak = 0;
+  saveStats(stats);
+  refreshStatsUI();
+
+  // 3. Понижаем уровень слова в статистике (usedHint = true)
+  updateWordProgress(currentCategory, currentWordObj[0], mistakes, true);
+
+  // 4. Показываем правильный ответ и фиксируем проигрыш раунда
+  renderWordUI(currentWordObj[0].toUpperCase());
+  updateTipBoxUI(`Незнакомо! Тачно слово: ${currentWordObj[0]}`, 'loss');
+
+  // 5. Завершаем игру (блокируем ввод, открываем кнопку новой игры)
+  finishGame(false);
+
+  // Меняем текст кнопки подсказки
+  const hintBtn = document.getElementById("hintButton");
+  if (hintBtn) hintBtn.textContent = "🔊 Слушај поново";
 }
 
 function listenForKeyboardInput() {

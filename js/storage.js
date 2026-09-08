@@ -172,11 +172,17 @@ function updateWordProgress(catKey, wordText, mistakes, usedHint) {
   let newLevel = currentLevel;
 
   if (mistakes >= 3) {
+    // Проигрыш (исчерпаны ошибки) -> сброс уровня в 0
     newLevel = 0;
   } else if (usedHint) {
+    // Нажата кнопка «Слушај фрау» -> понижаем уровень на 1
     newLevel = Math.max(0, currentLevel - 1);
   } else if (mistakes === 0) {
+    // Идеальная победа без ошибок -> повышаем уровень на 1
     newLevel = Math.min(5, currentLevel + 1);
+  } else {
+    // Победа, но были ошибки (mistakes > 0) -> уровень не меняем
+    newLevel = currentLevel;
   }
 
   stats[wordKey] = { level: newLevel, totalErrors: totalErrors, lastSeen: Date.now() };
