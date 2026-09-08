@@ -10,7 +10,7 @@ const words_anatomical_dirs = [
     ["meditalis", "унутрашњи, ка унутра"],
     ["Leteralis", "спољашњи, ка споља"],
     ["Transversalis", "попречни"],
-    ["Superion", "горњи"],
+    ["Superior", "горњи"],
     ["Inferior", "доњи"],
     ["Proximalis", "горњи"],
     ["Cranialis", "горе, ка глави"],

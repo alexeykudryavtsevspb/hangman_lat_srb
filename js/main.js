@@ -21,18 +21,32 @@ function refreshStatsUI() {
   const categoryData = typeof GAME_CATEGORIES !== 'undefined' ? GAME_CATEGORIES[currentCategory] : null;
   const categoryWords = categoryData ? categoryData.words : [];
   
-  let learnedCount = 0;
-  if (categoryWords.length > 0) {
+  let totalLevelSum = 0;
+  const totalWordsCount = categoryWords.length;
+
+  if (totalWordsCount > 0) {
     const statsMap = loadCategoryStats(currentCategory);
     categoryWords.forEach(item => {
       let wordKey = item[0].toUpperCase();
-      if (statsMap[wordKey] && statsMap[wordKey].level >= 5) {
-        learnedCount++;
-      }
+      let wordData = statsMap[wordKey] || { level: 0 };
+      // Ограничиваем уровень максимум 5 на всякий случай
+      let level = Math.min(5, wordData.level || 0);
+      totalLevelSum += level;
     });
   }
 
-  updateScoreBoxUI(stats, { learned: learnedCount, total: categoryWords.length });
+  // Считаем средний процент с десятыми долями: (сумма уровней / (всего слов * 5 макс. уровней)) * 100
+  let maxPossibleScore = totalWordsCount * 5;
+  let progressPercentage = maxPossibleScore > 0 ? (totalLevelSum / maxPossibleScore) * 100 : 0;
+
+  // Округляем до 1 знака после запятой
+  let formattedPercentage = progressPercentage.toFixed(1);
+
+  // Передаем в UI
+  updateScoreBoxUI(stats, { 
+    learnedPercent: formattedPercentage, 
+    total: totalWordsCount 
+  });
 }
 
 function initCategorySelect() {

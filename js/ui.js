@@ -8,17 +8,32 @@ function getRankInfo(streak = 0) {
   return { title: 'Пролазник', icon: '☕' };
 }
 
-function updateScoreBoxUI(stats, categoryStats = { learned: 0, total: 0 }) {
+function updateScoreBoxUI(stats, categoryStats = { learnedPercent: "0.0", total: 0 }) {
   const streakDays = stats.streakDays || 0;
   const streakFreezes = `${stats.streakFreezes || 0}/3`;
   const currentStreak = stats.currentStreak || 0;
   const recordStreak = stats.recordStreak || 0;
   const rank = getRankInfo(currentStreak);
 
-  // Расчет процента прогресса по категории
-  const learned = categoryStats.learned || 0;
+  // Получаем готовый процент с десятыми долями и общее количество слов
+  const learnedPercent = categoryStats.learnedPercent || "0.0";
   const total = categoryStats.total || 0;
-  const percent = total > 0 ? Math.round((learned / total) * 100) : 0;
+
+  // Считаем количество слов на максимальном уровне (⭐ / уровень 5)
+  let maxLevelWordsCount = 0;
+  if (total > 0 && typeof currentCategory !== 'undefined' && typeof loadCategoryStats === 'function') {
+    const statsMap = loadCategoryStats(currentCategory);
+    const categoryData = typeof GAME_CATEGORIES !== 'undefined' ? GAME_CATEGORIES[currentCategory] : null;
+    const categoryWords = categoryData ? categoryData.words : [];
+    
+    categoryWords.forEach(item => {
+      let wordKey = item[0].toUpperCase();
+      let wordData = statsMap[wordKey] || { level: 0 };
+      if ((wordData.level || 0) >= 5) {
+        maxLevelWordsCount++;
+      }
+    });
+  }
 
   // 1. Верхняя мини-панель
   const streakDaysEl = document.getElementById('streakDaysValue');
@@ -33,7 +48,7 @@ function updateScoreBoxUI(stats, categoryStats = { learned: 0, total: 0 }) {
   if (currentStreakEl) currentStreakEl.textContent = currentStreak;
   if (recordStreakEl) recordStreakEl.textContent = recordStreak;
   if (rankIconEl) rankIconEl.textContent = rank.icon;
-  if (categoryPercentEl) categoryPercentEl.textContent = `${percent}%`;
+  if (categoryPercentEl) categoryPercentEl.textContent = `${learnedPercent}%`;
 
   // 2. Нижний блок-легенда
   const legendDaysEl = document.getElementById('legendDaysValue');
@@ -50,7 +65,9 @@ function updateScoreBoxUI(stats, categoryStats = { learned: 0, total: 0 }) {
   if (legendRecordEl) legendRecordEl.textContent = recordStreak;
   if (legendRankIconEl) legendRankIconEl.textContent = rank.icon;
   if (legendRankTitleEl) legendRankTitleEl.textContent = rank.title;
-  if (legendCategoryProgressEl) legendCategoryProgressEl.textContent = `${learned}/${total} (${percent}%)`;
+  if (legendCategoryProgressEl) {
+    legendCategoryProgressEl.textContent = `${learnedPercent}% (⭐: ${maxLevelWordsCount}/${total})`;
+  }
 }
 
 function renderIncubatorUI(activeWords, catKey) {
@@ -99,7 +116,7 @@ function renderIncubatorUI(activeWords, catKey) {
       slot.classList.add('new');
     }
 
-    slot.title = `${wordText} (Уровень: ${level}/5)`;
+    slot.title = `${wordText} (Ниво: ${level}/5)`;
     incubatorBox.appendChild(slot);
   });
 }
@@ -145,10 +162,9 @@ function updateTipBoxUI(text, statusClass = '') {
   tipBox.className = statusClass; // 'win', 'loss' или ''
 }
 
-function updateCategoryProgressUI(learnedCount, totalCount) {
+function updateCategoryProgressUI(learnedPercent, totalCount, maxLevelCount = 0) {
   const catProgressEl = document.getElementById('categoryProgressValue');
   if (!catProgressEl) return;
 
-  const percent = totalCount > 0 ? Math.round((learnedCount / totalCount) * 100) : 0;
-  catProgressEl.textContent = `🎓 Научено у категорији: ${learnedCount} / ${totalCount} (${percent}%)`;
+  catProgressEl.textContent = `🎓 Напредак категорије: ${learnedPercent}% (⭐: ${maxLevelCount}/${totalCount})`;
 }
