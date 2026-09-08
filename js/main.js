@@ -176,7 +176,6 @@ function checkWinCondition() {
     updateTipBoxUI(currentWordObj[1] || 'Победа!', 'win');
     
     updateWordProgress(currentCategory, currentWordObj[0], mistakes, false);
-    registerDailyActivity();
 
     stats = getSavedStats();
     stats.currentStreak++;
@@ -204,6 +203,8 @@ function checkLossCondition() {
 }
 
 function finishGame(isWon) {
+  registerDailyActivity();
+
   const hangmanImg = document.getElementById("hangmanImage");
   if (hangmanImg) {
     hangmanImg.src = isWon ? "img/hangman_win.jpeg" : `img/hangman${mistakes}.jpeg`;

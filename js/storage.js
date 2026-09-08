@@ -1,5 +1,13 @@
 // js/storage.js
 
+function getTodayLocalDateStr() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function getSavedStats() {
   let streakData = JSON.parse(localStorage.getItem('hangman_daily_streak_data')) || {
     days: 0,
@@ -26,8 +34,41 @@ function registerDailyActivity() {
   let streakData = JSON.parse(localStorage.getItem('hangman_daily_streak_data')) || {
     days: 0, freezes: 0, lastPlayDate: null, daysForNextFreeze: 0, dailyNormMet: false
   };
-  let today = new Date().toDateString();
+  
+  let todayStr = getTodayLocalDateStr();
 
+  // Если наступил новый календарный день
+  if (streakData.lastPlayDate !== todayStr) {
+    if (streakData.lastPlayDate) {
+      let lastDate = new Date(streakData.lastPlayDate);
+      let currentDate = new Date(todayStr);
+      let diffTime = currentDate - lastDate;
+      let diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Игрок играл вчера — сбрасываем дневную норму на новый день
+        streakData.dailyNormMet = false;
+      } else if (diffDays > 1) {
+        // Пропущено больше 1 дня
+        let missedDays = diffDays - 1;
+        if (streakData.freezes >= missedDays) {
+          streakData.freezes -= missedDays;
+          streakData.dailyNormMet = false;
+        } else {
+          // Заморозок не хватило — обнуляем страйк
+          streakData.days = 0;
+          streakData.daysForNextFreeze = 0;
+          streakData.dailyNormMet = false;
+        }
+      }
+    } else {
+      streakData.dailyNormMet = false;
+    }
+
+    streakData.lastPlayDate = todayStr;
+  }
+
+  // Если норма за сегодня еще не выполнялась
   if (!streakData.dailyNormMet) {
     streakData.dailyNormMet = true;
     streakData.days += 1;
@@ -39,7 +80,6 @@ function registerDailyActivity() {
     }
   }
 
-  streakData.lastPlayDate = today;
   localStorage.setItem('hangman_daily_streak_data', JSON.stringify(streakData));
 }
 
@@ -55,15 +95,15 @@ function getActivePool(catKey, allWords) {
   let poolKey = 'hangman_active_pool_' + catKey;
   let stats = loadCategoryStats(catKey);
   let poolData = JSON.parse(localStorage.getItem(poolKey)) || { words: [], lastCheckDate: null };
-  let today = new Date().toDateString();
+  let todayStr = getTodayLocalDateStr();
 
-  if (poolData.lastCheckDate !== today) {
+  if (poolData.lastCheckDate !== todayStr) {
     poolData.words = poolData.words.filter(wordText => {
       let wordKey = wordText.toUpperCase();
       let level = stats[wordKey] ? stats[wordKey].level : 0;
       return level < 5;
     });
-    poolData.lastCheckDate = today;
+    poolData.lastCheckDate = todayStr;
   }
 
   if (poolData.words.length < 10) {
@@ -146,3 +186,13 @@ function updateWordProgress(catKey, wordText, mistakes, usedHint) {
 function getSavedProgress() { 
   return {}; 
 }
+
+// Утилита для разработчика (сброс прогресса категории через консоль)
+window.resetCategory = function(catKey = (typeof currentCategory !== 'undefined' ? currentCategory : 'Test')) {
+  localStorage.removeItem('hangman_stats_' + catKey);
+  localStorage.removeItem('hangman_active_pool_' + catKey);
+  console.log(`%c Прогресс и активный пул категории "${catKey}" полностью сброшены!`, 'color: #d32f2f; font-weight: bold;');
+  if (typeof startNewGame === 'function') {
+    startNewGame();
+  }
+};
