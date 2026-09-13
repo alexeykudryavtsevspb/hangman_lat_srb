@@ -27,7 +27,7 @@ const GAME_CATEGORIES = {
     "serbia_verbs": {
         title: "Сербские глаголы",
         words: words_serbia_verbs,
-        allLetters: "ABVGDĐEŽZIJKLJMNOPRSTĆUFHCČŠ",
+        allLetters: "ABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ",
         lang: "sr"
     }
 };
