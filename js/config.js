@@ -29,5 +29,11 @@ const GAME_CATEGORIES = {
         words: words_serbian_verbs,
         allLetters: "ABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ",
         lang: "sr"
+    },
+    "serbian_phrases": {
+        title: "sr=>ru: Сербские пословицы",
+        words: words_serbian_phrases,
+        allLetters: "ABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ",
+        lang: "sr"
     }
 };
