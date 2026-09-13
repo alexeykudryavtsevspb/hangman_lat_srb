@@ -35,5 +35,11 @@ const GAME_CATEGORIES = {
         words: words_serbian_phrases,
         allLetters: "ABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ",
         lang: "sr"
+    },
+    "tatar": {
+        title: "tt=>ru: Татарский",
+        words: words_tatar,
+        allLetters: "АӘЯБҖЧЩДЕФГҺЫИЖКЛМНҢОЁӨПРСШТЦУҮЮВХЙЗЭЪ",
+        lang: "tt"
     }
 };
