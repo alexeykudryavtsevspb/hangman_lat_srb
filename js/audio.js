@@ -1,11 +1,11 @@
 // js/audio.js
 
 const audioCache = {};
-let soundEffectsEnabled = true; // По умолчанию звуковые эффекты включены
-let currentSpeechLang = 'la'; // Язык озвучки по умолчанию ('la', 'sr', 'en', 'ru')
+let soundEffectsEnabled = true; // Sound effects enabled by default
+let currentSpeechLang = 'la'; // Default speech language ('la', 'sr', 'en', 'ru')
 
 /**
- * Установка языка озвучки
+ * Set speech language
  */
 function setSpeechLanguage(lang) {
   if (lang) {
@@ -14,7 +14,7 @@ function setSpeechLanguage(lang) {
 }
 
 /**
- * Переключатель звуковых эффектов
+ * Toggle sound effects
  */
 function setSoundEffectsEnabled(enabled) {
   soundEffectsEnabled = enabled;
@@ -24,7 +24,7 @@ function setSoundEffectsEnabled(enabled) {
 }
 
 /**
- * Универсальная функция проигрывания звуковых файлов из папки audio/
+ * Universal function to play sound files from the audio/ folder
  */
 function playAudio(filename) {
   if (!soundEffectsEnabled) return;
@@ -35,11 +35,11 @@ function playAudio(filename) {
   
   const sound = audioCache[filename];
   sound.currentTime = 0;
-  sound.play().catch(err => console.warn(`Не удалось проиграть звук ${filename}:`, err));
+  sound.play().catch(err => console.warn(`Failed to play sound ${filename}:`, err));
 }
 
 /**
- * Мгновенно останавливает воспроизведение всех длинных аудиофайлов
+ * Immediately stops playback of all long audio files
  */
 function stopLongAudio() {
   ['win.mp3', 'fajront.mp3', 'los.mp3'].forEach((filename) => {
@@ -50,13 +50,13 @@ function stopLongAudio() {
   });
 }
 
-// Звуковые эффекты
+// Sound effects shortcuts
 function playYesAudio() { playAudio('yes.wav'); }
 function playNoAudio() { playAudio('no.wav'); }
 function playWinAudio() { playAudio('win.mp3'); }
 function playLossAudio() { playAudio('fajront.mp3'); }
 
-// Предзагрузка голосов для браузера
+// Preload browser voices
 if ('speechSynthesis' in window) {
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged = () => {
@@ -65,7 +65,7 @@ if ('speechSynthesis' in window) {
 }
 
 /**
- * Подбор наиболее подходящего голоса в зависимости от языка с учетом фоллбэков
+ * Pick the best matching voice depending on the language with fallbacks
  */
 function getBestVoice(lang = currentSpeechLang) {
   if (!('speechSynthesis' in window)) return null;
@@ -73,13 +73,11 @@ function getBestVoice(lang = currentSpeechLang) {
 
   switch (lang) {
     case 'la':
-      // Латынь: фоллбэк на итальянский или испанский по фонетике
       return voices.find(v => v.lang === 'it-IT') ||
              voices.find(v => v.lang.startsWith('it')) ||
              voices.find(v => v.lang.startsWith('es')) || null;
 
     case 'sr':
-      // Сербский: фоллбэк на хорватский (hr) или боснийский (bs)
       return voices.find(v => v.lang === 'sr-RS' || v.lang === 'sr') ||
              voices.find(v => v.lang.startsWith('sr')) ||
              voices.find(v => v.lang.startsWith('hr')) ||
@@ -100,7 +98,52 @@ function getBestVoice(lang = currentSpeechLang) {
 }
 
 /**
- * Озвучка слова с учетом текущего языка и фоллбэком на Google TTS
+ * Fallback speech synthesis using Web Speech API
+ */
+function fallbackSpeechSynth(text, targetLang, onEndCallback) {
+  const cleanText = text.toLowerCase().trim();
+
+  if (!('speechSynthesis' in window)) {
+    if (onEndCallback) onEndCallback();
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  
+  const langMap = {
+    'la': 'it-IT',
+    'sr': 'sr-RS',
+    'hr': 'hr-HR',
+    'en': 'en-US',
+    'ru': 'ru-RU'
+  };
+
+  utterance.lang = langMap[targetLang] || targetLang;
+
+  const bestVoice = getBestVoice(targetLang);
+  if (bestVoice) {
+    utterance.voice = bestVoice;
+    utterance.lang = bestVoice.lang;
+  }
+
+  utterance.rate = targetLang === 'la' ? 0.8 : 0.9;
+
+  if (onEndCallback) {
+    utterance.onend = onEndCallback;
+    utterance.onerror = (e) => {
+      console.warn("Speech synthesis error:", e);
+      onEndCallback();
+    };
+  }
+
+  window.speechSynthesis.speak(utterance);
+}
+
+/**
+ * Speak word: checks mapping table from window.AUDIO_MAPPING_<LANG>,
+ * plays audio/<lang>/<filename>.mp3 if mapped, otherwise falls back to speech synthesis.
  */
 function speakWord(text, onEndCallback) {
   if (!text) {
@@ -108,42 +151,34 @@ function speakWord(text, onEndCallback) {
     return;
   }
 
-  const cleanText = text.toLowerCase().trim();
   const targetLang = currentSpeechLang || 'la';
+  const mappingVarName = `AUDIO_MAPPING_${targetLang.toUpperCase()}`;
+  const mapping = window[mappingVarName] || {};
+  const filename = mapping[text];
 
-  // 1. Пробуем встроенный синтезатор браузера
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const bestVoice = getBestVoice(targetLang);
+  if (filename) {
+    const audioPath = `audio/${targetLang}/${filename}.mp3`;
+    const sound = new Audio(audioPath);
+    let finished = false;
 
-    if (bestVoice) {
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.voice = bestVoice;
-      utterance.lang = bestVoice.lang;
-      utterance.rate = targetLang === 'la' ? 0.8 : 0.9;
-
-      if (onEndCallback) {
-        utterance.onend = onEndCallback;
-        utterance.onerror = onEndCallback;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        if (onEndCallback) onEndCallback();
       }
+    };
 
-      window.speechSynthesis.speak(utterance);
-      return;
-    }
+    sound.onended = finish;
+    sound.onerror = () => {
+      fallbackSpeechSynth(text, targetLang, finish);
+    };
+
+    sound.play().catch(() => {
+      fallbackSpeechSynth(text, targetLang, finish);
+    });
+    return;
   }
 
-  // 2. Фоллбэк: Запрос к Google TTS
-  const encodedText = encodeURIComponent(cleanText);
-  const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${targetLang}&client=tw-ob`;
-  const ttsAudio = new Audio(ttsUrl);
-
-  if (onEndCallback) {
-    ttsAudio.onended = onEndCallback;
-    ttsAudio.onerror = onEndCallback;
-  }
-
-  ttsAudio.play().catch((err) => {
-    console.warn("Ошибка проигрывания Google TTS:", err);
-    if (onEndCallback) onEndCallback();
-  });
+  // Fallback if phrase is not found in mapping table
+  fallbackSpeechSynth(text, targetLang, onEndCallback);
 }
