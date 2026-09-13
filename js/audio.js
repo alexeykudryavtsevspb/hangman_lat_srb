@@ -2,6 +2,16 @@
 
 const audioCache = {};
 let soundEffectsEnabled = true; // По умолчанию звуковые эффекты включены
+let currentSpeechLang = 'la'; // Язык озвучки по умолчанию ('la', 'sr', 'en', 'ru')
+
+/**
+ * Установка языка озвучки
+ */
+function setSpeechLanguage(lang) {
+  if (lang) {
+    currentSpeechLang = lang;
+  }
+}
 
 /**
  * Переключатель звуковых эффектов
@@ -55,19 +65,42 @@ if ('speechSynthesis' in window) {
 }
 
 /**
- * Подбор наиболее подходящего голоса для латыни (Итальянский/Испанский идеальны по фонетике)
+ * Подбор наиболее подходящего голоса в зависимости от языка с учетом фоллбэков
  */
-function getBestVoice() {
+function getBestVoice(lang = currentSpeechLang) {
   if (!('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices();
-  
-  return voices.find(v => v.lang === 'it-IT') ||
-         voices.find(v => v.lang.startsWith('it')) ||
-         voices.find(v => v.lang.startsWith('es')) || null;
+
+  switch (lang) {
+    case 'la':
+      // Латынь: фоллбэк на итальянский или испанский по фонетике
+      return voices.find(v => v.lang === 'it-IT') ||
+             voices.find(v => v.lang.startsWith('it')) ||
+             voices.find(v => v.lang.startsWith('es')) || null;
+
+    case 'sr':
+      // Сербский: фоллбэк на хорватский (hr) или боснийский (bs)
+      return voices.find(v => v.lang === 'sr-RS' || v.lang === 'sr') ||
+             voices.find(v => v.lang.startsWith('sr')) ||
+             voices.find(v => v.lang.startsWith('hr')) ||
+             voices.find(v => v.lang.startsWith('bs')) || null;
+
+    case 'en':
+      return voices.find(v => v.lang === 'en-US') ||
+             voices.find(v => v.lang === 'en-GB') ||
+             voices.find(v => v.lang.startsWith('en')) || null;
+
+    case 'ru':
+      return voices.find(v => v.lang === 'ru-RU') ||
+             voices.find(v => v.lang.startsWith('ru')) || null;
+
+    default:
+      return voices.find(v => v.lang.startsWith(lang)) || null;
+  }
 }
 
 /**
- * Озвучка латинского слова с автоматическим фоллбэком на Google TTS
+ * Озвучка слова с учетом текущего языка и фоллбэком на Google TTS
  */
 function speakWord(text, onEndCallback) {
   if (!text) {
@@ -76,17 +109,18 @@ function speakWord(text, onEndCallback) {
   }
 
   const cleanText = text.toLowerCase().trim();
+  const targetLang = currentSpeechLang || 'la';
 
   // 1. Пробуем встроенный синтезатор браузера
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
-    const bestVoice = getBestVoice();
+    const bestVoice = getBestVoice(targetLang);
 
     if (bestVoice) {
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.voice = bestVoice;
       utterance.lang = bestVoice.lang;
-      utterance.rate = 0.8;
+      utterance.rate = targetLang === 'la' ? 0.8 : 0.9;
 
       if (onEndCallback) {
         utterance.onend = onEndCallback;
@@ -98,9 +132,9 @@ function speakWord(text, onEndCallback) {
     }
   }
 
-  // 2. Фоллбэк: Запрос к Google TTS (Латынь tl=la)
+  // 2. Фоллбэк: Запрос к Google TTS
   const encodedText = encodeURIComponent(cleanText);
-  const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=la&client=tw-ob`;
+  const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${targetLang}&client=tw-ob`;
   const ttsAudio = new Audio(ttsUrl);
 
   if (onEndCallback) {
@@ -112,8 +146,4 @@ function speakWord(text, onEndCallback) {
     console.warn("Ошибка проигрывания Google TTS:", err);
     if (onEndCallback) onEndCallback();
   });
-}
-
-function speakSerbianText(text) {
-  speakWord(text);
 }

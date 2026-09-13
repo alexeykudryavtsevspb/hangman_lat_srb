@@ -1,3 +1,4 @@
+// js/config.js
 const GAME_CATEGORIES = {
     "anatomija_1": {
         title: "Anatomija-1",

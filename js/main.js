@@ -77,12 +77,14 @@ function initCategorySelect() {
   });
 
   currentCategory = selectEl.value;
+  setSpeechLanguage(GAME_CATEGORIES[currentCategory].lang);
 }
 
 function onCategoryChange() {
   const selectEl = document.getElementById('categorySelect');
   if (selectEl) {
     currentCategory = selectEl.value;
+    setSpeechLanguage(GAME_CATEGORIES[currentCategory].lang);
     localStorage.setItem('hangman_category', currentCategory);
     startNewGame();
   }
