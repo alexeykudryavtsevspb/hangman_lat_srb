@@ -1,7 +1,7 @@
 // js/main.js
 
 let currentCategory = '';
-let currentWordObj = null; // [ "Слово", "Перевод" ]
+let currentWordObj = null; // [ "Word", "Translation", "Optional Extra Info" ]
 let guessedLetters = new Set();
 let mistakes = 0;
 const MAX_MISTAKES = 7;
@@ -10,13 +10,22 @@ let stats = getSavedStats();
 
 document.addEventListener('DOMContentLoaded', () => {
   initCategorySelect();
-  initSettingsUI(); // Инициализация настроек
+  initSettingsUI();
   stats = getSavedStats();
   refreshStatsUI();
   listenForKeyboardInput();
   startNewGame();
 });
 
+// Helper function to combine tip and extra info with a vertical bar
+function getLossOrHintTip(wordObj) {
+  if (!wordObj) return '';
+  const baseTip = wordObj[1] || '';
+  const extraTip = wordObj[2] ? ` | ${wordObj[2]}` : '';
+  return baseTip + extraTip;
+}
+
+// Refresh stats UI and percentage
 function refreshStatsUI() {
   const categoryData = typeof GAME_CATEGORIES !== 'undefined' ? GAME_CATEGORIES[currentCategory] : null;
   const categoryWords = categoryData ? categoryData.words : [];
@@ -29,30 +38,28 @@ function refreshStatsUI() {
     categoryWords.forEach(item => {
       let wordKey = item[0].toUpperCase();
       let wordData = statsMap[wordKey] || { level: 0 };
-      // Ограничиваем уровень максимум 5 на всякий случай
+      // Limit level to max 5
       let level = Math.min(5, wordData.level || 0);
       totalLevelSum += level;
     });
   }
 
-  // Считаем средний процент с десятыми долями: (сумма уровней / (всего слов * 5 макс. уровней)) * 100
+  // Calculate average percentage with decimal point
   let maxPossibleScore = totalWordsCount * 5;
   let progressPercentage = maxPossibleScore > 0 ? (totalLevelSum / maxPossibleScore) * 100 : 0;
-
-  // Округляем до 1 знака после запятой
   let formattedPercentage = progressPercentage.toFixed(1);
 
-  // Передаем в UI
   updateScoreBoxUI(stats, { 
     learnedPercent: formattedPercentage, 
     total: totalWordsCount 
   });
 }
 
+// Initialize category dropdown select
 function initCategorySelect() {
   const selectEl = document.getElementById('categorySelect');
   if (!selectEl || typeof GAME_CATEGORIES === 'undefined') {
-    console.error('GAME_CATEGORIES не найден! Проверь подключение config.js');
+    console.error('GAME_CATEGORIES not found! Check config.js connection');
     return;
   }
 
@@ -80,6 +87,7 @@ function initCategorySelect() {
   setSpeechLanguage(GAME_CATEGORIES[currentCategory].lang);
 }
 
+// Handle category change from UI dropdown
 function onCategoryChange() {
   const selectEl = document.getElementById('categorySelect');
   if (selectEl) {
@@ -90,6 +98,7 @@ function onCategoryChange() {
   }
 }
 
+// Start a new game round
 function startNewGame() {
   stopLongAudio();
 
@@ -102,7 +111,7 @@ function startNewGame() {
 
   const categoryData = GAME_CATEGORIES[currentCategory];
   if (!categoryData || !categoryData.words || categoryData.words.length === 0) {
-    console.warn('Нет слов в выбранной категории:', currentCategory);
+    console.warn('No words found in category:', currentCategory);
     return;
   }
 
@@ -131,6 +140,7 @@ function startNewGame() {
   }
 }
 
+// Handle letter guess action
 function handleLetterGuess(letter) {
   if (guessedLetters.has(letter) || mistakes >= MAX_MISTAKES) return;
 
@@ -157,6 +167,7 @@ function handleLetterGuess(letter) {
   renderKeyboardUI(categoryAlphabet, guessedLetters, handleLetterGuess);
 }
 
+// Update masked word display on screen
 function updateWordDisplay() {
   if (!currentWordObj) return;
 
@@ -173,7 +184,7 @@ function updateWordDisplay() {
         display += '_';
       }
     } else {
-      // Пробелы, дефисы и прочие небуквенные символы выводим как есть
+      // Keep spaces, hyphens, and symbols as they are
       display += char;
     }
   }
@@ -181,22 +192,22 @@ function updateWordDisplay() {
   renderWordUI(display);
 }
 
+// Check if player won the round
 function checkWinCondition() {
   const cleanWord = currentWordObj[0].toUpperCase();
   const categoryAlphabet = GAME_CATEGORIES[currentCategory]?.allLetters || [];
   const alphabetSet = new Set(categoryAlphabet);
 
   const isWon = [...cleanWord].every(char => {
-    // Если символ не из алфавита (пробел, дефис), он не требует угадывания
     if (!alphabetSet.has(char)) return true;
     return guessedLetters.has(char);
   });
 
   if (isWon) {
     updateWordDisplay();
-    updateTipBoxUI(currentWordObj[1] || 'Победа!', 'win');
+    // Show only translation with win style (no extra text)
+    updateTipBoxUI(getLossOrHintTip(currentWordObj), 'win');
     
-    // Обновляем прогресс слова (если ошибок 0 -> +1 уровень, если были ошибки -> уровень не меняем)
     updateWordProgress(currentCategory, currentWordObj[0], mistakes, false);
 
     stats = getSavedStats();
@@ -212,15 +223,17 @@ function checkWinCondition() {
   }
 }
 
+// Check if player lost the round
 function checkLossCondition() {
   if (mistakes >= MAX_MISTAKES) {
     renderWordUI(currentWordObj[0].toUpperCase());
-    updateTipBoxUI(`Пораз! Тачно слово: ${currentWordObj[0]}`, 'loss');
     
-    // Проигрыш раунда (сброс уровня слова в 0)
+    // Show tip + extra tip separated by vertical bar with loss style
+    updateTipBoxUI(getLossOrHintTip(currentWordObj), 'loss');
+    
     updateWordProgress(currentCategory, currentWordObj[0], mistakes, false);
 
-    // Сброс серии побед при проигрыше
+    // Reset win streak
     stats = getSavedStats();
     stats.currentStreak = 0;
     saveStats(stats);
@@ -231,6 +244,7 @@ function checkLossCondition() {
   }
 }
 
+// Finalize game state (win or loss)
 function finishGame(isWon) {
   registerDailyActivity();
 
@@ -243,7 +257,10 @@ function finishGame(isWon) {
   if (newGameBtn) newGameBtn.disabled = false;
 
   const hintBtn = document.getElementById('hintButton');
-  if (hintBtn) hintBtn.disabled = true;
+  if (hintBtn) {
+    // Keep hint button enabled so user can listen again
+    hintBtn.disabled = false;
+  }
 
   const categoryData = GAME_CATEGORIES[currentCategory];
   if (categoryData) {
@@ -253,60 +270,58 @@ function finishGame(isWon) {
   }
 }
 
+// Handle hint / listen button click
 function useHint() {
   if (!currentWordObj || !currentWordObj[0]) return;
+  if (mistakes >= MAX_MISTAKES) return;
 
-  // 1. Озвучиваем слово
+  // Speak word without error sound
   speakWord(currentWordObj[0]);
 
-  // 2. Сбрасываем текущую серию правильных ответов
-  stats = getSavedStats();
+  // Count as one mistake
+  mistakes++;
+  
   stats.currentStreak = 0;
   saveStats(stats);
   refreshStatsUI();
 
-  // 3. Понижаем уровень слова в статистике (usedHint = true)
-  updateWordProgress(currentCategory, currentWordObj[0], mistakes, true);
+  updateHangmanImageUI(mistakes);
+  checkLossCondition();
 
-  // 4. Показываем правильный ответ и фиксируем проигрыш раунда
-  renderWordUI(currentWordObj[0].toUpperCase());
-  updateTipBoxUI(`Незнакомо! Тачно слово: ${currentWordObj[0]}`, 'loss');
-
-  // 5. Завершаем игру (блокируем ввод, открываем кнопку новой игры)
-  finishGame(false);
-
-  // Меняем текст кнопки подсказки
+  // Keep hint button active and update label
   const hintBtn = document.getElementById("hintButton");
-  if (hintBtn) hintBtn.textContent = "🔊 Слушај поново";
+  if (hintBtn) {
+    hintBtn.textContent = "🔊 Слушај поново";
+    hintBtn.disabled = false;
+  }
 }
 
+// Listen for keyboard input (physical keyboard)
 function listenForKeyboardInput() {
   document.addEventListener('keydown', (event) => {
-    // Игнорируем горячие клавиши браузера (Ctrl+R, Alt+Tab, Cmd+Shift и т.д.)
+    // Ignore browser shortcuts (Ctrl+R, Alt+Tab, etc.)
     if (event.ctrlKey || event.altKey || event.metaKey) return;
 
     const pressedKey = event.key.toUpperCase();
     const categoryAlphabet = GAME_CATEGORIES[currentCategory]?.allLetters || [];
     const alphabetSet = new Set(categoryAlphabet);
     
-    // Проверяем, завершен ли текущий раунд
+    // Check if current round is over
     const cleanWord = currentWordObj ? currentWordObj[0].toUpperCase() : '';
     const isGameOver = mistakes >= MAX_MISTAKES || (cleanWord && [...cleanWord].every(char => {
       if (!alphabetSet.has(char)) return true;
       return guessedLetters.has(char);
     }));
 
-    // 1. Управление новой игрой
-    // Escape работает всегда, а Enter/Space — только когда раунд окончен
+    // 1. New game control (Escape always works, Enter/Space work only when round is over)
     if (event.key === 'Escape' || ((event.key === 'Enter' || event.key === ' ') && isGameOver)) {
-      event.preventDefault(); // Предотвращаем скролл страницы от пробела
+      event.preventDefault(); // Prevent page scroll on spacebar
       startNewGame();
       return;
     }
 
-    // 2. Ввод букв (только во время активной игры)
+    // 2. Letter input (only during active game)
     if (!isGameOver && categoryAlphabet.includes(pressedKey)) {
-      // Если буква ещё не нажималась — угадываем, иначе игнорируем без ошибок
       if (!guessedLetters.has(pressedKey)) {
         handleLetterGuess(pressedKey);
       }
@@ -314,11 +329,11 @@ function listenForKeyboardInput() {
   });
 }
 
+// Initialize sound effects settings
 function initSettingsUI() {
   const soundCheckbox = document.getElementById('soundEffectsToggle');
   if (!soundCheckbox) return;
 
-  // Загружаем сохраненный выбор пользователя
   const savedSoundPref = localStorage.getItem('hangman_sound_effects');
   const isEnabled = savedSoundPref !== null ? savedSoundPref === 'true' : true;
 
@@ -332,7 +347,7 @@ function initSettingsUI() {
   });
 }
 
-// Глобальное выравнивание функций для HTML
+// Export functions to global scope for HTML events
 window.newGame = startNewGame;
 window.onCategoryChange = onCategoryChange;
 window.useHint = useHint;
