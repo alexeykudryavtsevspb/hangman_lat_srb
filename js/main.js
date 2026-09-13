@@ -161,17 +161,19 @@ function updateWordDisplay() {
   if (!currentWordObj) return;
 
   const cleanWord = currentWordObj[0].toUpperCase();
+  const categoryAlphabet = GAME_CATEGORIES[currentCategory]?.allLetters || [];
+  const alphabetSet = new Set(categoryAlphabet);
   let display = '';
 
   for (let char of cleanWord) {
-    let charCode = char.charCodeAt(0);
-    if ((charCode >= 65 && charCode <= 90) || charCode > 127) {
+    if (alphabetSet.has(char)) {
       if (guessedLetters.has(char)) {
         display += char;
       } else {
         display += '_';
       }
     } else {
+      // Пробелы, дефисы и прочие небуквенные символы выводим как есть
       display += char;
     }
   }
@@ -181,10 +183,13 @@ function updateWordDisplay() {
 
 function checkWinCondition() {
   const cleanWord = currentWordObj[0].toUpperCase();
+  const categoryAlphabet = GAME_CATEGORIES[currentCategory]?.allLetters || [];
+  const alphabetSet = new Set(categoryAlphabet);
+
   const isWon = [...cleanWord].every(char => {
-    let charCode = char.charCodeAt(0);
-    let isLetter = (charCode >= 65 && charCode <= 90) || charCode > 127;
-    return !isLetter || guessedLetters.has(char);
+    // Если символ не из алфавита (пробел, дефис), он не требует угадывания
+    if (!alphabetSet.has(char)) return true;
+    return guessedLetters.has(char);
   });
 
   if (isWon) {
@@ -282,12 +287,13 @@ function listenForKeyboardInput() {
 
     const pressedKey = event.key.toUpperCase();
     const categoryAlphabet = GAME_CATEGORIES[currentCategory]?.allLetters || [];
+    const alphabetSet = new Set(categoryAlphabet);
     
     // Проверяем, завершен ли текущий раунд
     const cleanWord = currentWordObj ? currentWordObj[0].toUpperCase() : '';
     const isGameOver = mistakes >= MAX_MISTAKES || (cleanWord && [...cleanWord].every(char => {
-      let code = char.charCodeAt(0);
-      return (code < 65 || (code > 90 && code <= 127)) || guessedLetters.has(char);
+      if (!alphabetSet.has(char)) return true;
+      return guessedLetters.has(char);
     }));
 
     // 1. Управление новой игрой
