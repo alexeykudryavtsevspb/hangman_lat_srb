@@ -23,5 +23,11 @@ const GAME_CATEGORIES = {
         words: words_anatomical_dirs,
         allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
         lang: "la"
+    },
+    "serbia_verbs": {
+        title: "Сербские глаголы",
+        words: words_serbia_verbs,
+        allLetters: "ABVGDĐEŽZIJKLJMNOPRSTĆUFHCČŠ",
+        lang: "sr"
     }
 };
