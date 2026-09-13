@@ -1,31 +1,31 @@
 // js/config.js
 const GAME_CATEGORIES = {
     "anatomija_1": {
-        title: "Anatomija-1",
+        title: "la=>sr: Anatomija-1",
         words: words_anatomija_1,
         allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
         lang: "la"
     },
     "phrases": {
-        title: "Познате фразе",
+        title: "la=>sr: Познате фразе",
         words: words_phrases,
         allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
         lang: "la"
     },
     "test": {
-        title: "Test",
+        title: "la=>sr: Test",
         words: words_test,
         allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
         lang: "la"
     },
     "anatomical_dirs": {
-        title: "Anatomija - pravci i položaji",
+        title: "la=>sr: Anatomija - pravci i položaji",
         words: words_anatomical_dirs,
         allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
         lang: "la"
     },
     "serbia_verbs": {
-        title: "Сербские глаголы",
+        title: "sr=>ru: Сербские глаголы",
         words: words_serbia_verbs,
         allLetters: "ABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ",
         lang: "sr"
