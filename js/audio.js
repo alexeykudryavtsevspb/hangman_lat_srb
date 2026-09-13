@@ -27,8 +27,6 @@ function setSoundEffectsEnabled(enabled) {
  * Universal function to play sound files from the audio/ folder
  */
 function playAudio(filename) {
-  if (!soundEffectsEnabled) return;
-
   if (!audioCache[filename]) {
     audioCache[filename] = new Audio(`audio/${filename}`);
   }
@@ -42,7 +40,7 @@ function playAudio(filename) {
  * Immediately stops playback of all long audio files
  */
 function stopLongAudio() {
-  ['win.mp3', 'fajront.mp3', 'los.mp3'].forEach((filename) => {
+  ['win.mp3', 'los.mp3'].forEach((filename) => {
     if (audioCache[filename]) {
       audioCache[filename].pause();
       audioCache[filename].currentTime = 0;
@@ -51,10 +49,23 @@ function stopLongAudio() {
 }
 
 // Sound effects shortcuts
-function playYesAudio() { playAudio('yes.wav'); }
-function playNoAudio() { playAudio('no.wav'); }
-function playWinAudio() { playAudio('win.mp3'); }
-function playLossAudio() { playAudio('fajront.mp3'); }
+function playYesAudio() {
+  playAudio('yes.wav');
+}
+
+function playNoAudio() {
+  playAudio('no.wav');
+}
+
+function playWinAudio() {
+  if (!soundEffectsEnabled) return;
+  playAudio('win.mp3');
+}
+
+function playLossAudio() {
+  if (!soundEffectsEnabled) return;
+  playAudio('los.mp3');
+}
 
 // Preload browser voices
 if ('speechSynthesis' in window) {
