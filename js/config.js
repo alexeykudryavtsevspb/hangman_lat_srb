@@ -24,9 +24,9 @@ const GAME_CATEGORIES = {
         allLetters: "ABCDEFGHIKLMNOPQRSTUVXYZ",
         lang: "la"
     },
-    "serbia_verbs": {
+    "serbian_verbs": {
         title: "sr=>ru: Сербские глаголы",
-        words: words_serbia_verbs,
+        words: words_serbian_verbs,
         allLetters: "ABVGDĐEŽZIJKLMNOPRSTĆUFHCČŠ",
         lang: "sr"
     }

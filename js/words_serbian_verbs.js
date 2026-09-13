@@ -1,4 +1,4 @@
-const words_serbia_verbs = [
+const words_serbian_verbs = [
   // Группа «А»
   ["Znati", "Знать; уметь", "ja znam | on zna | oni znaju (группа А)"],
   ["Odgovarati", "Отвечать", "ja odgovaram | on odgovara | oni odgovaraju (группа А)"],
